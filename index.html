@@ -1,0 +1,1662 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2447c4">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Atelier de Français</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+/* Concept : une page de cahier Seyès. Les cartes sont des feuilles posées sur le quadrillage,
+   les corrections sont au stylo rouge, les bonnes réponses au stylo vert, les titres surlignés. */
+:root{
+  --paper:#f6f8ff; --grid:#cfd9f6; --grid-soft:#e5ebfd;
+  --card:#ffffff; --ink:#18213d; --muted:#53608a; --edge:#c3cdee;
+  --blue:#2447c4; --blue-ink:#ffffff; --blue-soft:#e8edff;
+  --red:#c42f3a; --red-bg:#fdeced;
+  --green:#157548; --green-bg:#e4f5ec;
+  --mark:#ffe36e;
+  --f-display:"Segoe Print","Bradley Hand","Comic Sans MS","Chalkboard SE",system-ui,sans-serif;
+  --f-body:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#101733; --grid:#26345f; --grid-soft:#192447;
+    --card:#18214a; --ink:#e9edfb; --muted:#a4aed2; --edge:#34437a;
+    --blue:#9db3ff; --blue-ink:#101a3d; --blue-soft:#24316a;
+    --red:#ff959b; --red-bg:#3b2030;
+    --green:#74dca9; --green-bg:#163a30;
+    --mark:#6a5d1c;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101733; --grid:#26345f; --grid-soft:#192447;
+  --card:#18214a; --ink:#e9edfb; --muted:#a4aed2; --edge:#34437a;
+  --blue:#9db3ff; --blue-ink:#101a3d; --blue-soft:#24316a;
+  --red:#ff959b; --red-bg:#3b2030;
+  --green:#74dca9; --green-bg:#163a30;
+  --mark:#6a5d1c;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; color:var(--ink); font-family:var(--f-body); font-size:17px; line-height:1.55;
+  padding-block:20px 56px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+    linear-gradient(var(--grid-soft) 1px,transparent 1px);
+  background-size:32px 32px,32px 32px,32px 8px;
+  background-attachment:fixed;
+}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.25;margin:0;text-wrap:balance}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:20px;min-width:0}
+
+/* Boutons */
+.btn{
+  border:2px solid var(--blue);background:transparent;color:var(--blue);
+  padding:10px 18px;border-radius:8px;font-weight:800;font-size:16px;min-height:46px;
+}
+.btn:hover{background:var(--blue-soft)}
+.btn.primary{background:var(--blue);color:var(--blue-ink)}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.link{border:0;background:none;color:var(--blue);font-weight:800;padding:8px 0;text-decoration:underline;text-underline-offset:3px}
+
+/* Accueil */
+.hero{display:flex;flex-direction:column;gap:10px;padding-top:6px}
+.hero h1{font-size:clamp(30px,6vw,46px);font-weight:800}
+.hero h1 span{background:linear-gradient(transparent 58%,var(--mark) 58% 92%,transparent 92%);padding:0 6px;margin-left:-6px}
+.hero p{max-width:60ch;color:var(--muted);font-size:18px}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.how div{background:var(--card);border:1.5px solid var(--edge);border-radius:6px;padding:12px 14px;min-width:0}
+.how b{font-family:var(--f-display);display:block;margin-bottom:2px}
+.how span{color:var(--muted);font-size:15px}
+.sect-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px}
+.sect-h h2{font-size:22px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:2px solid var(--edge);background:var(--card);border-radius:999px;padding:6px 14px;font-weight:700;font-size:15px;min-height:40px}
+.chip[aria-pressed="true"]{border-color:var(--blue);background:var(--blue);color:var(--blue-ink)}
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:16px}
+.lv{background:var(--card);border:1.5px solid var(--edge);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0;box-shadow:3px 3px 0 var(--edge)}
+.lv-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lv-top .n{font-family:var(--f-display);font-weight:700;color:var(--muted);font-size:15px}
+.dots{display:flex;gap:5px}
+.dots i{width:12px;height:12px;border-radius:50%;border:2px solid var(--blue);display:block}
+.dots i.on{background:var(--blue)}
+.lv h3{font-size:22px}
+.lv p{color:var(--muted);font-size:16px}
+.lv .meta{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.best{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums}
+.best .st{color:#d49a00;letter-spacing:2px}
+.lv-act{display:flex;flex-wrap:wrap;gap:10px;margin-top:auto;padding-top:6px}
+.extras{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}
+.ex{background:var(--card);border:1.5px dashed var(--edge);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;min-width:0}
+.ex h3{font-size:18px}
+.ex p{color:var(--muted);font-size:15px}
+
+/* Séance */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.bar .mid{font-family:var(--f-display);font-weight:700}
+.timer{font-family:var(--f-display);font-weight:800;font-size:24px;font-variant-numeric:tabular-nums;background:var(--card);border:2px solid var(--ink);border-radius:8px;padding:2px 14px}
+.timer.low{color:var(--red);border-color:var(--red)}
+.count{font-weight:800;font-variant-numeric:tabular-nums}
+.prog{height:10px;background:var(--card);border:1.5px solid var(--edge);border-radius:6px;overflow:hidden}
+.prog span{display:block;height:100%;background:var(--blue)}
+.grid{display:flex;flex-wrap:wrap;gap:6px}
+.grid button{width:40px;height:40px;border-radius:6px;border:2px solid var(--edge);background:var(--card);font-weight:800;font-variant-numeric:tabular-nums;padding:0}
+.grid button.done{background:var(--blue-soft);border-color:var(--blue)}
+.grid button.cur{outline:3px solid var(--ink);outline-offset:1px}
+.qcard{background:var(--card);border:1.5px solid var(--edge);border-radius:6px;padding:22px;display:flex;flex-direction:column;gap:16px;min-width:0;box-shadow:3px 3px 0 var(--edge)}
+.tag{font-family:var(--f-display);font-weight:700;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.q{font-size:20px;font-weight:600;line-height:1.5;text-wrap:pretty}
+.ptitle{font-size:20px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px}
+.opt{border:2px solid var(--edge);background:var(--card);border-radius:8px;padding:12px 14px;text-align:left;font-size:18px;font-weight:600;min-height:52px}
+.opt:hover:not([disabled]){border-color:var(--blue);background:var(--blue-soft)}
+.opt.sel{border-color:var(--blue);background:var(--blue-soft);box-shadow:inset 0 0 0 1px var(--blue)}
+.opt.good{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.opt.bad{border-color:var(--red);background:var(--red-bg);color:var(--red);text-decoration:line-through}
+.opt[disabled]{cursor:default;color:inherit}
+.opt.good[disabled]{color:var(--green)}
+.opt.bad[disabled]{color:var(--red)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:800;font-size:15px;color:var(--muted)}
+.field input{border:0;border-bottom:3px solid var(--blue);background:var(--blue-soft);border-radius:6px 6px 0 0;padding:10px 12px;font-size:20px;font-weight:600;width:100%;max-width:26rem}
+.field input.ok,.blank.ok{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.field input.ko,.blank.ko{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+.passage{font-size:19px;line-height:2.5;text-wrap:pretty}
+.blank{font-size:17px;font-weight:700;border:0;border-bottom:3px solid var(--blue);background:var(--blue-soft);border-radius:6px 6px 0 0;padding:3px 8px;margin:0 3px;max-width:100%;vertical-align:baseline}
+select.blank{padding-right:4px}
+input.blank{width:9.5em}
+.msg{color:var(--red);font-weight:800}
+
+/* Correction au stylo */
+.fb{border-radius:6px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;border:2px solid;min-width:0}
+.fb.good{background:var(--green-bg);border-color:var(--green)}
+.fb.bad{background:var(--red-bg);border-color:var(--red)}
+.fb h3{font-size:24px}
+.fb.good h3{color:var(--green)}
+.fb.bad h3{color:var(--red)}
+.mine .x{color:var(--red);text-decoration:line-through;font-weight:700}
+.right b{color:var(--green)}
+.why{font-size:17px}
+ul.why{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.filled{font-size:18px;line-height:2.1}
+.fill{font-weight:800;padding:1px 6px;border-radius:4px}
+.fill.ok{color:var(--green);background:var(--green-bg);border-bottom:2px solid var(--green)}
+.fill.ko{color:var(--red);background:var(--red-bg);border-bottom:2px solid var(--red)}
+.fill.ko s{opacity:.8}
+.fill.ko b{color:var(--green)}
+.rule{background:var(--card);border:1.5px solid var(--ink);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;color:var(--ink)}
+.rule h4{font-size:18px;display:inline;background:linear-gradient(transparent 58%,var(--mark) 58% 92%,transparent 92%)}
+.rule .tag{display:block;margin-bottom:4px}
+.rule p{font-size:16px}
+.rule ul{margin:0;padding-left:20px;font-size:16px;display:flex;flex-direction:column;gap:2px}
+.rule em{font-style:normal;background:var(--blue-soft);padding:0 4px;border-radius:3px}
+details.rd{border:1.5px solid var(--edge);border-radius:6px;background:var(--card);padding:0}
+details.rd>summary{cursor:pointer;padding:12px 14px;font-weight:800;font-family:var(--f-display);font-size:17px}
+details.rd>.rule{border:0;border-top:1.5px solid var(--edge);border-radius:0 0 6px 6px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.actions .sp{flex:1}
+.notice{background:var(--card);border:2px solid var(--ink);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+
+/* Résultats */
+.score{display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px}
+.score .big{font-family:var(--f-display);font-weight:800;font-size:clamp(44px,10vw,72px);line-height:1;font-variant-numeric:tabular-nums}
+.score .big small{font-size:.45em;color:var(--muted)}
+.score .st{font-size:34px;color:#d49a00;letter-spacing:4px}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar-row{display:grid;grid-template-columns:minmax(120px,200px) 1fr 70px;gap:10px;align-items:center;font-size:15px;font-weight:700}
+.bar-row .m{height:14px;border:1.5px solid var(--ink);border-radius:4px;background:var(--card);overflow:hidden}
+.bar-row .m span{display:block;height:100%;background:var(--blue)}
+.bar-row .v{font-variant-numeric:tabular-nums;text-align:right}
+.corr{display:flex;flex-direction:column;gap:14px}
+.corr-item{background:var(--card);border:1.5px solid var(--edge);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.corr-item.okk{border-color:var(--green)}
+.corr-item .q{font-size:18px}
+.mark{font-family:var(--f-display);font-weight:800}
+.mark.o{color:var(--green)}
+.mark.k{color:var(--red)}
+.empty{color:var(--muted)}
+
+/* Fiches */
+.cat{display:flex;flex-direction:column;gap:10px}
+.cat h2{font-size:22px}
+
+@media (max-width:560px){
+  body{font-size:16px}
+  .qcard{padding:16px}
+  .q{font-size:19px}
+  .bar-row{grid-template-columns:1fr 60px}
+  .bar-row .m{grid-column:1 / -1;grid-row:2}
+  .bar-row .v{grid-row:1;grid-column:2}
+}
+@media (prefers-reduced-motion:no-preference){
+  .fb{animation:pop .25s ease-out}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+}
+
+.seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}
+.seg button{border:2px solid var(--edge);background:var(--card);border-radius:8px;padding:12px 14px;text-align:left;display:flex;flex-direction:column;gap:2px;min-height:64px}
+.seg button span{color:var(--muted);font-size:14px}
+.seg button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-soft);box-shadow:inset 0 0 0 1px var(--blue)}
+.pill{font-family:var(--f-body);font-size:13px;font-weight:800;border:1.5px solid var(--edge);border-radius:999px;padding:1px 10px;color:var(--muted);vertical-align:middle}
+.pill.on{color:var(--green);border-color:var(--green);background:var(--green-bg)}
+.pill.warn{color:var(--red);border-color:var(--red)}
+.panel{background:var(--card);border:1.5px solid var(--edge);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0;box-shadow:3px 3px 0 var(--edge)}
+.panel h2{font-size:21px}
+.small{font-size:15px;color:var(--muted)}
+.form{display:flex;flex-direction:column;gap:6px}
+.form.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px}
+.form label,.row label{font-weight:800;font-size:15px;color:var(--muted)}
+.panel input[type=text],.panel input[type=password],.panel select,.panel textarea{border:2px solid var(--edge);background:var(--paper);border-radius:8px;padding:10px 12px;font-size:17px;width:100%;min-height:48px;color:var(--ink)}
+.panel textarea{font-family:ui-monospace,monospace;font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row input{max-width:9rem}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:15px}
+.check input{width:24px;height:24px;flex:none}
+.status{font-weight:700;color:var(--ink);background:var(--blue-soft);border-radius:6px;padding:8px 12px}
+.warnbox{border-color:var(--red)}
+.btn,.chip,.opt,.link{touch-action:manipulation}
+@media (min-width:900px){body{font-size:18px}.q{font-size:22px}.opt{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+var THEMES = {passe:"Temps du passé", conj:"Conjugaison", ortho:"Orthographe", gram:"Grammaire et vocabulaire"};
+var THEME_ORDER = ["passe","conj","ortho","gram"];
+
+var RULES = {
+tps:{t:"Reconnaître le temps d’une phrase",c:"passe",
+ x:"Pour trouver le temps, regarde le verbe et les mots qui indiquent le moment. <b>Hier, la semaine dernière, autrefois</b> → passé. <b>Maintenant, aujourd’hui</b> → présent. <b>Demain, bientôt, dans deux jours</b> → futur. Le <b>passé composé</b> s’écrit en deux mots (avoir ou être + participe passé). L’<b>imparfait</b> se termine par -ais, -ait, -ions, -iez, -aient. Le <b>futur</b> se termine par -rai, -ras, -ra, -rons, -rez, -ront.",
+ e:["Hier, nous avons joué. (passé composé)","Elle chantait souvent. (imparfait)","Demain, tu partiras. (futur)"]},
+impPC:{t:"Imparfait ou passé composé ?",c:"passe",
+ x:"<b>L’imparfait</b> sert à décrire (le décor, la météo, un personnage), à dire ce qui se passait d’habitude ou ce qui durait. <b>Le passé composé</b> raconte les actions précises et terminées qui font avancer l’histoire. Astuce : <b>imparfait = décor, passé composé = action</b>. Mots repères : <em>souvent, toujours, chaque jour, pendant que, à cette époque</em> → imparfait ; <em>soudain, tout à coup, hier, un jour, ce matin, puis</em> → passé composé.",
+ e:["Il faisait beau et les oiseaux chantaient. (décor)","Chaque été, nous allions à la mer. (habitude)","Soudain, un chien a aboyé. (action précise)"]},
+inter:{t:"Une action en interrompt une autre",c:"passe",
+ x:"Quand une action est en train de se dérouler et qu’une autre arrive d’un coup, on utilise <b>l’imparfait pour l’action en cours</b> et <b>le passé composé pour celle qui l’interrompt</b>. Deux actions qui durent en même temps (pendant que…) sont toutes les deux à l’imparfait.",
+ e:["Je lisais quand le téléphone a sonné.","Pendant que maman cuisinait, je faisais mes devoirs."]},
+impForm:{t:"Former l’imparfait",c:"passe",
+ x:"On prend le verbe au présent avec <b>nous</b>, on enlève <b>-ons</b>, puis on ajoute <b>-ais, -ais, -ait, -ions, -iez, -aient</b>. Exception : <b>être</b> → j’étais. Verbes en -ger : je mange<b>ais</b> (le e garde le son de « j »), mais nous mangions. Verbes en -cer : je commen<b>ç</b>ais, mais nous commencions.",
+ e:["nous finissons → je finissais, nous finissions","nous mangeons → je mangeais, nous mangions","être → j’étais, vous étiez"]},
+pcForm:{t:"Former le passé composé",c:"passe",
+ x:"Passé composé = <b>avoir ou être au présent</b> + <b>participe passé</b>. Participes passés : verbes en -er → <b>é</b> (chanté) ; verbes en -ir → <b>i</b> (fini). Irréguliers à connaître : avoir → eu, être → été, faire → fait, prendre → pris, mettre → mis, dire → dit, écrire → écrit, voir → vu, pouvoir → pu, vouloir → voulu, devoir → dû, ouvrir → ouvert.",
+ e:["J’ai pris le bus.","Nous avons fini à midi.","Elle a fait un gâteau."]},
+auxEtre:{t:"Avoir ou être ?",c:"passe",
+ x:"La plupart des verbes utilisent <b>avoir</b>. On utilise <b>être</b> avec : <em>aller, venir, arriver, partir, entrer, sortir, monter, descendre, tomber, rester, naître, mourir, retourner</em> et avec <b>tous les verbes pronominaux</b> (se lever, s’habiller…). Astuce : si le verbe se conjugue avec « se », c’est être.",
+ e:["Il est parti hier.","Nous sommes arrivés en retard.","Elle s’est levée tôt.","Mais : J’ai mangé une pomme."]},
+ppAccord:{t:"Accorder le participe passé",c:"passe",
+ x:"Avec <b>être</b>, le participe passé s’accorde avec le <b>sujet</b> (féminin : e ; pluriel : s). Avec <b>avoir</b>, il ne s’accorde pas avec le sujet : il s’accorde seulement avec le COD s’il est <b>placé avant</b> le verbe. Avec un verbe pronominal, on regarde où est le COD : elle s’est lavée (pas de COD après) ; elle s’est lavé les mains (COD « les mains » après le verbe).",
+ e:["Mes amies sont arrivées.","Léa a perdu ses clés.","La lettre que j’ai écrite est partie.","Elle s’est cassé la jambe."]},
+pqp:{t:"Le plus-que-parfait",c:"passe",
+ x:"On l’utilise pour une action <b>déjà terminée avant</b> une autre action du passé. On le forme avec l’<b>imparfait de avoir ou être</b> + le participe passé. Mots repères : <em>déjà, la veille, avant, auparavant</em>.",
+ e:["Quand je suis arrivé, le film avait déjà commencé.","La veille, elle avait préparé les gâteaux.","Nous étions partis avant la pluie."]},
+futur:{t:"Le futur simple",c:"conj",
+ x:"Pour la plupart des verbes : <b>infinitif + -ai, -as, -a, -ons, -ez, -ont</b> (je chanterai, tu finiras). Verbes en -re : on enlève le e (il prendra). Radicaux à connaître : <b>être</b> → ser-, <b>avoir</b> → aur-, <b>aller</b> → ir-, <b>faire</b> → fer-, <b>pouvoir</b> → pourr-, <b>voir</b> → verr-, <b>venir</b> → viendr-, <b>vouloir</b> → voudr-.",
+ e:["Demain, je serai en retard.","Vous pourrez venir.","Ils viendront à midi."]},
+condit:{t:"Le conditionnel présent",c:"conj",
+ x:"On l’emploie après <b>si + imparfait</b> pour dire ce qui arriverait. Il se forme avec le radical du futur + les terminaisons de l’imparfait : <b>-ais, -ais, -ait, -ions, -iez, -aient</b>. Après « si », on n’écrit jamais de conditionnel ni de futur.",
+ e:["Si j’avais le temps, je viendrais.","Si tu étais là, nous jouerions."]},
+presIrr:{t:"Le présent des verbes irréguliers",c:"conj",
+ x:"À connaître par cœur. <b>être</b> : je suis, tu es, il est, nous sommes, vous êtes, ils sont. <b>avoir</b> : j’ai, tu as, il a, nous avons, vous avez, ils ont. <b>aller</b> : je vais, tu vas, il va, nous allons, vous allez, ils vont. <b>faire</b> : vous faites, ils font. <b>dire</b> : vous dites. <b>pouvoir</b> : je peux, tu peux, il peut, ils peuvent. <b>prendre</b> : nous prenons, ils prennent.",
+ e:["Vous faites du bruit.","Ils peuvent venir."]},
+hom_a:{t:"a ou à ?",c:"ortho",
+ x:"<b>a</b> = verbe avoir : on peut dire « avait ». <b>à</b> = préposition : on ne peut pas dire « avait ».",
+ e:["Léa a un chat. (Léa avait un chat)","Elle va à l’école."]},
+hom_et:{t:"et ou est ?",c:"ortho",
+ x:"<b>est</b> = verbe être : on peut dire « était ». <b>et</b> = « et puis » : il relie deux mots ou deux phrases.",
+ e:["Le ciel est bleu. (Le ciel était bleu)","Tom et Léa jouent."]},
+hom_son:{t:"son ou sont ?",c:"ortho",
+ x:"<b>sont</b> = verbe être : on peut dire « étaient ». <b>son</b> = déterminant : on peut dire « mon » ou « ton ».",
+ e:["Ils sont partis. (Ils étaient partis)","Il range son sac. (Il range mon sac)"]},
+hom_on:{t:"on ou ont ?",c:"ortho",
+ x:"<b>ont</b> = verbe avoir : on peut dire « avaient ». <b>on</b> = pronom : on peut dire « il » ou « nous ».",
+ e:["Ils ont gagné. (Ils avaient gagné)","On mange à midi. (Il mange à midi)"]},
+hom_ce:{t:"ce ou se ?",c:"ortho",
+ x:"<b>se</b> se place devant un verbe (se laver, se lever). <b>ce</b> se place devant un nom (ce livre) ou veut dire « cela ».",
+ e:["Il se lave les mains.","Ce livre est passionnant."]},
+hom_ces:{t:"ces ou ses ?",c:"ortho",
+ x:"<b>ces</b> sert à montrer : on peut ajouter -ci ou -là (ces livres-là). <b>ses</b> veut dire « à lui » ou « à elle » : on peut dire « mes » ou « tes ».",
+ e:["Ces fleurs sont jolies.","Léa range ses affaires. (Léa range mes affaires)"]},
+hom_leur:{t:"leur ou leurs ?",c:"ortho",
+ x:"<b>leur</b> devant un nom singulier (leur maison), ou devant un verbe : « je leur parle » (jamais de s). <b>leurs</b> devant un nom pluriel (leurs jouets).",
+ e:["Ils aiment leur jardin.","Ils rangent leurs jouets."]},
+hom_ou:{t:"ou ou où ?",c:"ortho",
+ x:"<b>où</b> indique un lieu ou un moment : on ne peut pas dire « ou bien ». <b>ou</b> = « ou bien » : il propose un choix.",
+ e:["Où habites-tu ?","Veux-tu du thé ou du café ?"]},
+hom_quel:{t:"quel, quelle ou qu’elle ?",c:"ortho",
+ x:"<b>quel, quelle, quels, quelles</b> s’accordent avec le nom (quelle heure ?). <b>qu’elle</b> = « que » + « elle » : on peut dire « qu’il ».",
+ e:["Quelle belle journée !","Je crois qu’elle viendra. (Je crois qu’il viendra)"]},
+hom_peu:{t:"peu, peut ou peux ?",c:"ortho",
+ x:"<b>peu</b> = pas beaucoup (il mange peu). <b>peut</b> et <b>peux</b> sont le verbe pouvoir : on peut dire « pouvait ». Je peux, tu peux, il peut.",
+ e:["Il mange peu.","Il peut venir. (Il pouvait venir)"]},
+hom_pret:{t:"prêt ou près ?",c:"ortho",
+ x:"<b>prêt</b> (prête, prêts, prêtes) veut dire « préparé » et s’accorde. <b>près</b> veut dire « pas loin » et ne change jamais.",
+ e:["Elle est prête à partir.","La gare est près de chez moi."]},
+hom_plus:{t:"plus tôt ou plutôt ?",c:"ortho",
+ x:"<b>plus tôt</b> = le contraire de « plus tard ». <b>plutôt</b> = « de préférence » ou « assez ».",
+ e:["Je me lève plus tôt demain.","Je prends plutôt du thé."]},
+gn:{t:"Accorder dans le groupe nominal",c:"ortho",
+ x:"Le déterminant, le nom et l’adjectif s’accordent en <b>genre</b> et en <b>nombre</b>. Pluriel : on ajoute <b>-s</b>. Les noms en -al font -aux (un journal → des journaux). Féminin : on ajoute souvent un <b>e</b> (voisin → voisine). Les mots en -teur font souvent -trice (lecteur → lectrice).",
+ e:["des fleurs rouges","un cheval blanc → des chevaux blancs","un lecteur attentif → une lectrice attentive"]},
+sv:{t:"Accorder le verbe avec son sujet",c:"ortho",
+ x:"Le verbe s’accorde avec le <b>sujet</b>, même s’il en est éloigné. Pour trouver le sujet, pose la question « Qui est-ce qui ? » devant le verbe. Deux sujets (Léo et Jules) → pluriel. Avec « mes parents et moi », on utilise <b>nous</b>.",
+ e:["Les élèves de ma classe vont au musée. (Qui va ? Les élèves)","Mes parents et moi partirons demain."]},
+pron:{t:"Les pronoms personnels",c:"gram",
+ x:"Un pronom remplace un groupe de mots. <b>Il, elle, ils, elles</b> remplacent le sujet. <b>Le, la, les</b> remplacent un COD : je regarde le film → je <b>le</b> regarde. <b>Lui, leur</b> remplacent un COI : je parle à Paul → je <b>lui</b> parle. Quand il y a les deux : je <b>le lui</b> donne.",
+ e:["Marie mange une pomme. → Elle mange une pomme.","Je regarde le film. → Je le regarde.","Je parle à mes amis. → Je leur parle."]},
+fonc:{t:"Les compléments de la phrase",c:"gram",
+ x:"Le <b>COD</b> répond à « quoi ? » ou « qui ? » après le verbe, sans préposition. Le <b>COI</b> répond à « à qui ? à quoi ? de quoi ? ». Le <b>complément circonstanciel</b> (temps, lieu, manière) peut se déplacer ou disparaître sans que la phrase perde son sens.",
+ e:["Léo mange une pomme. (COD : une pomme)","Hier soir, Léa lit dans sa chambre. (hier soir : temps ; dans sa chambre : lieu)"]},
+voc:{t:"Synonymes et contraires",c:"gram",
+ x:"Un <b>synonyme</b> a presque le même sens (joli = beau). Un <b>contraire</b> a le sens opposé (chaud ↔ froid). On forme souvent des contraires avec les préfixes <b>in-, im-, dé-, mal-</b> : possible → impossible, faire → défaire. Devant b, m, p, on écrit <b>im-</b>.",
+ e:["peureux ↔ courageux","possible → impossible","heureux ↔ malheureux"]},
+fam:{t:"Les familles de mots",c:"gram",
+ x:"Les mots d’une même famille partagent un <b>radical</b> et un sens commun. On ajoute un préfixe (re-, dé-) ou un suffixe (-eur, -ation, -ette) au radical. Attention aux intrus qui ressemblent à la famille mais n’en font pas partie.",
+ e:["terre : terrain, terrasse, atterrir, enterrer","porter : transporter, portable, apporter"]}
+};
+
+var BANK = [];
+function Q(l,t,r,q,o,a,w){BANK.push({id:BANK.length,l:l,t:t,r:r,k:"qcm",q:q,o:o,a:a,w:w});}
+function F(l,t,r,q,a,w){BANK.push({id:BANK.length,l:l,t:t,r:r,k:"fill",q:q,a:a,w:w});}
+function P(l,t,r,title,x,b){BANK.push({id:BANK.length,l:l,t:t,r:r,k:"pass",title:title,x:x,b:b});}
+
+/* ===================== NIVEAU 1 · Échauffement ===================== */
+Q(1,"passe","tps","Hier, nous avons mangé une pizza. Quel est le temps du verbe ?",["présent","passé composé","futur simple"],1,"« avons mangé » est formé de avoir (au présent) + un participe passé. Avec « hier », on sait que c’est le passé : c’est le passé composé.");
+Q(1,"passe","tps","Quand j’étais petit, j’habitais à la campagne. Quel est le temps du verbe « habitais » ?",["imparfait","passé composé","futur simple"],0,"« habitais » se termine par -ais et ne s’écrit qu’en un mot : c’est de l’imparfait. Il décrit où je vivais à cette époque.");
+Q(1,"passe","pcForm","Complète : « Elle ___ une glace. »",["a mangé","est mangé","à mangé"],0,"Manger se conjugue avec avoir : elle a mangé. Et on écrit « a » sans accent, car on peut dire « elle avait mangé ».");
+Q(1,"passe","auxEtre","Complète : « Hier, mon frère ___ à la piscine. »",["a allé","est allé","es allé"],1,"Aller fait partie des verbes qui se conjuguent avec être. Pour « mon frère » (il), on écrit : il est allé.");
+F(1,"passe","impForm","Écris le verbe à l’imparfait : « Quand j’étais petit, je (jouer) ___ tout le temps dehors. »",["jouais"],"On écrit « je jouais » : le radical jou- + la terminaison -ais pour « je ».");
+F(1,"passe","impForm","Écris le verbe à l’imparfait : « Chaque soir, nous (finir) ___ nos devoirs avant le dîner. »",["finissions"],"Au présent, « nous finissons » : on garde finiss- et on ajoute -ions. « Chaque soir » indique une habitude, donc l’imparfait.");
+F(1,"passe","pcForm","Écris le verbe au passé composé : « Hier, j’ (prendre) ___ le bus. »",["ai pris"],"Prendre se conjugue avec avoir : j’ai + le participe passé « pris ». Ce participe est irrégulier.");
+F(1,"passe","auxEtre","Écris le verbe au passé composé : « Samedi, Léa (aller) ___ au cinéma. »",["est allée"],"Aller se conjugue avec être. Le participe s’accorde avec le sujet : Léa est une fille, on ajoute un e : « est allée ».");
+Q(1,"passe","impPC","Quel mot annonce un événement précis (passé composé) ?",["soudain","souvent","toujours"],0,"« Soudain » annonce quelque chose qui arrive d’un coup : passé composé. « Souvent » et « toujours » indiquent une habitude : imparfait.");
+Q(1,"passe","impPC","Complète : « Quand j’étais petit, chaque matin, mon père ___ le journal. »",["lisait","a lu","lit"],0,"« Chaque matin » indique une habitude dans le passé : on utilise l’imparfait.");
+Q(1,"passe","pcForm","Quel est le participe passé du verbe « prendre » ?",["pris","prendu","prenu"],0,"Le participe passé de prendre est irrégulier : pris, comme mis, fait, dit, vu. Il faut le connaître par cœur.");
+Q(1,"passe","auxEtre","Complète : « Hier, la pluie ___ tombée toute la journée. »",["est","a"],0,"Tomber se conjugue avec être : la pluie est tombée. Le participe s’accorde avec « la pluie » (féminin).");
+Q(1,"passe","impForm","Quelle forme est à l’imparfait ?",["nous chantons","nous chantions","nous chanterons"],1,"L’imparfait avec « nous » se termine par -ions : nous chantions. « chantons » est du présent, « chanterons » du futur.");
+Q(1,"conj","futur","Complète : « Demain, je ___ au parc. »",["irai","vais","allais"],0,"« Demain » annonce le futur. Le futur d’aller est irrégulier : j’irai.");
+F(1,"conj","futur","Écris le verbe au futur : « Demain, tu (avoir) ___ beaucoup de devoirs. »",["auras"],"Avoir au futur : j’aurai, tu auras… Le radical est aur-.");
+Q(1,"conj","presIrr","Comment s’écrit « faire » avec « vous » au présent ?",["vous faites","vous faisez","vous fesez"],0,"Faire est irrégulier : vous faites (comme vous dites). La terminaison n’est pas -ez comme pour les verbes en -er.");
+F(1,"conj","presIrr","Écris le verbe au présent : « Ils (pouvoir) ___ venir ce soir. »",["peuvent"],"Pouvoir : je peux, tu peux, il peut, nous pouvons, vous pouvez, ils peuvent.");
+Q(1,"ortho","hom_a","Complète : « Léa ___ de la chance. »",["a","à"],0,"On peut dire « Léa avait de la chance » : c’est le verbe avoir, donc « a » sans accent.");
+Q(1,"ortho","hom_et","Complète : « Mon père ___ grand. »",["est","et"],0,"On peut dire « mon père était grand » : c’est le verbe être, donc « est ».");
+Q(1,"ortho","hom_on","Complète : « Les élèves ___ fini leur travail. »",["ont","on"],0,"On peut dire « les élèves avaient fini » : c’est le verbe avoir, donc « ont ».");
+Q(1,"ortho","hom_son","Complète : « Ils ___ très contents. »",["sont","son"],0,"On peut dire « ils étaient contents » : c’est le verbe être, donc « sont ».");
+Q(1,"ortho","hom_ce","Complète : « Il ___ lève tôt. »",["se","ce"],0,"« se lever » est un verbe pronominal : « se » se place devant le verbe.");
+Q(1,"ortho","gn","Quel groupe nominal est bien écrit ?",["des fleurs rouges","des fleur rouges","des fleurs rouge"],0,"Le déterminant, le nom et l’adjectif sont tous au pluriel : des fleurs rouges.");
+Q(1,"gram","fonc","Dans « Les enfants jouent dans la cour. », quel est le sujet ?",["Les enfants","jouent","dans la cour"],0,"Pour trouver le sujet, on demande : « Qui est-ce qui joue ? » → les enfants.");
+Q(1,"gram","pron","Remplace « Marie » par un pronom : « Marie mange une pomme. »",["Elle","Il","Elles"],0,"Marie est une seule fille : on utilise « elle ».");
+Q(1,"gram","voc","Quel est le contraire de « courageux » ?",["peureux","fort","grand"],0,"Courageux et peureux ont des sens opposés.");
+Q(1,"gram","voc","Quel mot est un synonyme de « apercevoir » ?",["remarquer","oublier","entendre"],0,"Apercevoir veut dire voir, remarquer quelque chose rapidement.");
+
+/* ===================== NIVEAU 2 · Je choisis le bon temps ===================== */
+Q(2,"passe","inter","Complète : « Je ___ (lire) quand le téléphone ___ (sonner). »",["lisais … a sonné","ai lu … sonnait","lisais … sonnait"],0,"Une action est en cours (je lisais, imparfait) quand une autre l’interrompt d’un coup (le téléphone a sonné, passé composé).");
+Q(2,"passe","inter","Complète : « Nous ___ (jouer) dehors quand l’orage ___ (éclater). »",["jouions … a éclaté","avons joué … éclatait","jouions … éclatait"],0,"« jouions » est l’action en cours ; « a éclaté » est l’événement soudain qui l’interrompt.");
+Q(2,"passe","impPC","Complète : « Chaque été, nous ___ (aller) chez mamie. Un été, nous y ___ (rester) un mois entier. »",["allions … sommes restés","sommes allés … restions","allions … restions"],0,"« Chaque été » : habitude → imparfait (allions). « Un été » : événement précis → passé composé (sommes restés, avec être).");
+F(2,"passe","auxEtre","Écris au passé composé : « Ce matin, je (se réveiller) ___ à sept heures. » (Écris au féminin ou au masculin.)",["me suis réveillé","me suis réveillée"],"Les verbes pronominaux se conjuguent avec être : je me suis réveillé(e).");
+Q(2,"passe","inter","Complète : « Pendant que maman ___ (cuisiner), je ___ (faire) mes devoirs. »",["cuisinait … faisais","a cuisiné … ai fait","cuisinait … ai fait"],0,"« Pendant que » relie deux actions qui durent en même temps : les deux verbes sont à l’imparfait.");
+F(2,"passe","auxEtre","Écris au passé composé : « Soudain, la porte (s’ouvrir) ___ . »",["s’est ouverte"],"« Soudain » annonce un passé composé. S’ouvrir est pronominal : on utilise être, et le participe s’accorde avec « la porte » (féminin) : s’est ouverte.");
+Q(2,"passe","impPC","Complète : « Le ciel ___ (être) gris et il ___ (faire) froid. »",["était … faisait","a été … a fait","était … a fait"],0,"On décrit le décor (le ciel, la température) : imparfait.");
+Q(2,"passe","impPC","Complète : « Hier, nous ___ (visiter) le château et nous ___ (prendre) des photos. »",["avons visité … avons pris","visitions … prenions","avons visité … prenions"],0,"Ce sont deux actions précises et terminées qui s’enchaînent : passé composé pour les deux.");
+F(2,"passe","impForm","Écris à l’imparfait : « Quand j’étais petite, je (dormir) ___ avec une veilleuse. »",["dormais"],"C’est une habitude dans le passé : imparfait. Nous dormons → je dormais.");
+F(2,"passe","impPC","Écris au passé composé : « Un jour, mon chat (disparaître) ___ . »",["a disparu"],"« Un jour » annonce un événement précis. Disparaître se conjugue ici avec avoir ; le participe passé est « disparu » : il a disparu.");
+F(2,"passe","auxEtre","Écris au passé composé : « Tout à coup, les lumières (s’éteindre) ___ . »",["se sont éteintes"],"« Tout à coup » annonce un événement soudain. Verbe pronominal : être. Le participe s’accorde avec « les lumières » (féminin pluriel) : se sont éteintes.");
+Q(2,"passe","impPC","Quel groupe de mots annonce plutôt un imparfait ?",["d’habitude","soudain","hier soir"],0,"« D’habitude » parle de ce qui se passait régulièrement : imparfait. « Soudain » et « hier soir » annoncent un événement précis : passé composé.");
+Q(2,"passe","impPC","Complète : « Pendant les vacances, Tom ___ (se lever) tard tous les jours. »",["se levait","s’est levé","se lève"],0,"« Tous les jours » indique une habitude dans le passé : imparfait.");
+Q(2,"passe","auxEtre","Complète : « Elles ___ parties tôt. »",["sont","ont"],0,"Partir se conjugue avec être : elles sont parties.");
+Q(2,"passe","ppAccord","Complète : « Mes amies sont ___ hier. »",["arrivées","arrivés","arrivé"],0,"Avec être, le participe passé s’accorde avec le sujet : « mes amies » est féminin pluriel → arrivées.");
+Q(2,"passe","ppAccord","Complète : « Léa a ___ ses clés. »",["perdu","perdue","perdus"],0,"Avec avoir, le participe passé ne s’accorde pas avec le sujet. Le COD « ses clés » est placé après le verbe : on écrit « perdu ».");
+Q(2,"passe","impForm","Complète à l’imparfait : « Autrefois, vous ___ (manger) beaucoup de bonbons. »",["mangiez","mangeiez","mangez"],0,"Avec « vous », la terminaison de l’imparfait est -iez : vous mangiez. Le e de « mangeais » n’est pas utile devant un i.");
+F(2,"passe","impForm","Écris à l’imparfait : « Je (manger) ___ toujours vite. »",["mangeais"],"Devant la lettre a, on garde un e après le g pour conserver le son de « j » : je mangeais.");
+F(2,"passe","impForm","Écris à l’imparfait : « Nous (commencer) ___ à huit heures. »",["commencions"],"Devant -ions, le c reste un c (nous commencions). On écrit ç seulement devant a, o ou u : je commençais.");
+F(2,"conj","futur","Écris au futur : « Nous (finir) ___ bientôt. »",["finirons"],"Futur : infinitif + terminaison. Finir + ons → nous finirons.");
+F(2,"conj","presIrr","Écris au présent : « Vous (dire) ___ la vérité. »",["dites"],"Dire est irrégulier : vous dites (et non « disez »).");
+Q(2,"ortho","hom_ces","Complète : « Léa range ___ affaires. »",["ses","ces"],0,"On peut dire « mes affaires » : ce sont les affaires de Léa, donc « ses ».");
+Q(2,"ortho","hom_leur","Complète : « Les enfants rangent ___ jouets. »",["leurs","leur"],0,"Le nom « jouets » est au pluriel : « leurs » prend un s.");
+Q(2,"ortho","hom_ou","Complète : « ___ habites-tu ? »",["Où","Ou"],0,"On parle d’un lieu et on ne peut pas dire « ou bien » : on écrit « où » avec un accent.");
+Q(2,"ortho","hom_a","Complète : « Il a mal ___ la tête. »",["à","a"],0,"On ne peut pas dire « il a mal avait la tête » : c’est la préposition « à ».");
+Q(2,"gram","pron","Remplace « Marie et moi » par un pronom.",["nous","elles","vous"],0,"« Marie et moi » : plusieurs personnes dont moi → nous.");
+Q(2,"gram","fonc","Dans « Léo mange une pomme. », quel groupe est le COD ?",["une pomme","Léo","mange"],0,"On pose la question « Léo mange quoi ? » → une pomme.");
+Q(2,"gram","voc","Quel est le contraire de « possible » ?",["impossible","inpossible","malpossible"],0,"Devant un p, le préfixe s’écrit im- : impossible.");
+Q(2,"gram","voc","Quel mot est un synonyme de « se dépêcher » ?",["se presser","s’arrêter","rester"],0,"Se dépêcher veut dire se presser, aller vite.");
+
+/* ===================== NIVEAU 3 · Je raconte ===================== */
+P(3,"passe","impPC","Le chien de Tom",
+ "Il était une fois un garçon, Tom, qui {1} (adorer) se promener en forêt avec son chien. Un matin, il {2} (faire) beau et les oiseaux {3} (chanter). Tom {4} (marcher) tranquillement quand, tout à coup, son chien {5} (apercevoir) un lièvre. Le chien {6} (partir) en courant. Tom {7} (appeler) plusieurs fois, mais l’animal {8} (ne pas revenir).",
+ [{o:["adorait","a adoré","adore"],a:0,w:"On décrit ce que le garçon aimait faire d’habitude : imparfait."},
+  {o:["faisait","a fait","fait"],a:0,w:"On décrit le temps qu’il fait : c’est le décor, donc imparfait."},
+  {o:["chantaient","ont chanté","chantent"],a:0,w:"Description d’une scène qui dure : imparfait."},
+  {o:["marchait","a marché","marche"],a:0,w:"L’action est en cours quand un événement la coupe (« quand, tout à coup… ») : imparfait.",r:"inter"},
+  {o:["a aperçu","apercevait","avait aperçu"],a:0,w:"« Tout à coup » annonce un événement soudain qui interrompt l’action en cours : passé composé.",r:"inter"},
+  {o:["est parti","partait","était parti"],a:0,w:"Action précise qui fait avancer l’histoire. Partir se conjugue avec être : le chien est parti.",r:"auxEtre"},
+  {o:["a appelé","appelait","avait appelé"],a:0,w:"Action précise et terminée, répétée plusieurs fois : passé composé avec avoir."},
+  {o:["n’est pas revenu","ne revenait pas","ne revient pas"],a:0,w:"C’est le résultat final : un événement précis, donc passé composé. Revenir se conjugue avec être : n’est pas revenu.",r:"auxEtre"}]);
+P(3,"passe","impPC","Le goûter de mamie",
+ "Quand j’étais petite, mamie {1} (habiter) dans une grande maison près de la rivière. Tous les mercredis, nous {2} (aller) chez elle et elle nous {3} (préparer) un gâteau. Un mercredi, pourtant, la maison {4} (être) silencieuse. Je {5} (entrer) dans la cuisine et j’{6} (apercevoir) un mot sur la table.",
+ [{o:["habitait","a habité","habite"],a:0,w:"On décrit où mamie vivait à cette époque : imparfait."},
+  {o:["allions","sommes allés","allons"],a:0,w:"« Tous les mercredis » indique une habitude : imparfait."},
+  {o:["préparait","a préparé","prépare"],a:0,w:"Encore une habitude (tous les mercredis) : imparfait."},
+  {o:["était","a été","est"],a:0,w:"On décrit l’ambiance de la maison à ce moment-là : imparfait."},
+  {o:["suis entrée","entrais","ai entré"],a:0,w:"Action précise qui fait avancer l’histoire. Entrer se conjugue avec être. La narratrice est une fille (« petite »), donc : entrée.",r:"auxEtre"},
+  {o:["ai aperçu","apercevais","avais aperçu"],a:0,w:"Action précise (elle découvre le mot) : passé composé avec avoir : j’ai aperçu."}]);
+P(3,"passe","impPC","La nuit d’orage",
+ "Hier soir, les enfants {1} (se coucher) tôt car ils {2} (être) fatigués. Pendant la nuit, un orage {3} (éclater) et tout le monde {4} (se réveiller). Lina, qui {5} (avoir) très peur, {6} (aller) dans la chambre de ses parents.",
+ [{o:["se sont couchés","se couchaient","se sont couché"],a:0,w:"Événement précis (hier soir). Verbe pronominal : être, et le participe s’accorde avec « les enfants » : se sont couchés.",r:"auxEtre"},
+  {o:["étaient","ont été","sont"],a:0,w:"Cette phrase explique pourquoi : c’est un état qui dure, donc imparfait."},
+  {o:["a éclaté","éclatait","avait éclaté"],a:0,w:"Événement soudain qui arrive au milieu de la nuit : passé composé."},
+  {o:["s’est réveillé","se réveillait","s’est réveillée"],a:0,w:"Événement qui suit l’orage : passé composé avec être. « Tout le monde » est masculin singulier : s’est réveillé.",r:"ppAccord"},
+  {o:["avait","a eu","a"],a:0,w:"On décrit l’état de Lina au moment où elle bouge : imparfait."},
+  {o:["est allée","allait","a allé"],a:0,w:"Action précise : passé composé avec être, accordé avec Lina (féminin) : est allée.",r:"ppAccord"}]);
+P(3,"passe","impPC","Le bonhomme de neige",
+ "Ce matin-là, il {1} et il {2} très froid. Nous {3} de faire un bonhomme de neige. Pendant que papa {4} une carotte, j’{5} mes gants. Quand nous {6} , il {7} déjà midi. (Conjugue : neiger, faire, décider, chercher, enfiler, finir, être.)",
+ [{a:["neigeait"],w:"On décrit la météo : imparfait. Avec « il », on écrit neigeait (le e garde le son doux du g)."},
+  {a:["faisait"],w:"Autre élément du décor (le froid) : imparfait."},
+  {a:["avons décidé"],w:"Décision précise qui lance l’histoire : passé composé avec avoir.",r:"pcForm"},
+  {a:["cherchait"],w:"« Pendant que » : action qui dure en même temps qu’une autre : imparfait.",r:"inter"},
+  {a:["enfilais"],w:"Autre action qui dure en même temps : imparfait avec « je » → j’enfilais.",r:"inter"},
+  {a:["avons fini"],w:"Action terminée qui arrive avant l’heure de midi : passé composé avec avoir.",r:"pcForm"},
+  {a:["était"],w:"On décrit l’heure qu’il est à ce moment-là : imparfait."}]);
+Q(3,"passe","ppAccord","Complète : « Les photos que j’ai ___ sont réussies. »",["prises","pris","prise"],0,"Avec avoir, on accorde le participe avec le COD placé avant le verbe. Ici « que » remplace « les photos » (féminin pluriel) : prises.");
+Q(3,"passe","inter","Quelle phrase raconte bien une action en cours interrompue ?",["Je prenais ma douche quand quelqu’un a frappé à la porte.","J’ai pris ma douche quand quelqu’un frappait à la porte.","Je prends ma douche quand quelqu’un a frappé à la porte."],0,"L’action en cours (prendre sa douche) est à l’imparfait. L’événement qui l’interrompt (frapper) est au passé composé.");
+Q(3,"passe","impPC","Dans « Il faisait nuit et le vent soufflait. Soudain, un volet a claqué. », pourquoi « a claqué » est-il au passé composé ?",["C’est un événement précis et soudain.","C’est une habitude.","C’est une description."],0,"Les deux premiers verbes décrivent le décor (imparfait). « Soudain » annonce une action qui arrive d’un coup : passé composé.");
+Q(3,"passe","auxEtre","Complète : « Les enfants se ___ couchés tôt. »",["sont","ont","est"],0,"Les verbes pronominaux se conjuguent avec être : ils se sont couchés.");
+Q(3,"ortho","hom_quel","Complète : « ___ heure est-il ? »",["Quelle","Qu’elle","Quel"],0,"« heure » est féminin : « quelle » s’accorde avec le nom. On ne peut pas dire « que il » ici.");
+Q(3,"ortho","hom_quel","Complète : « Je pense ___ viendra demain. »",["qu’elle","quelle","quel"],0,"On peut dire « je pense qu’il viendra » : c’est « que » + « elle ».");
+Q(3,"ortho","sv","Complète : « Les élèves de ma classe ___ au musée. »",["vont","va","vais"],0,"Le sujet est « les élèves » (pluriel), même si « ma classe » est juste avant le verbe : ils vont.");
+F(3,"conj","sv","Écris au futur : « Mes parents et moi (partir) ___ demain. »",["partirons"],"« Mes parents et moi » = nous. Futur avec nous : partir + ons → nous partirons.");
+Q(3,"conj","condit","Complète : « Si j’avais le temps, je ___ vous voir. »",["viendrais","viendrai","viens"],0,"Après « si » + imparfait, on emploie le conditionnel : je viendrais.");
+Q(3,"gram","fonc","Dans « Hier soir, Léa a lu un livre dans sa chambre. », que signifie « dans sa chambre » ?",["un complément de lieu","un complément de temps","un COD"],0,"Il répond à la question « où ? ». C’est un complément circonstanciel de lieu : on peut le déplacer ou le supprimer.");
+Q(3,"gram","fam","Quel mot n’est pas de la famille de « terre » ?",["terrible","terrain","terrasse"],0,"Terrain et terrasse viennent de « terre ». « Terrible » vient d’un autre mot, qui veut dire « qui fait peur ».");
+Q(3,"gram","voc","Quel mot est un contraire de « heureux » ?",["malheureux","bienheureux","joyeux"],0,"Le préfixe mal- permet de former le contraire : heureux ↔ malheureux. Joyeux est un synonyme.");
+
+/* ===================== NIVEAU 4 · Défi expert ===================== */
+P(4,"passe","pqp","À la gare",
+ "Quand nous {1} (arriver) à la gare, le train {2} (déjà partir). Pendant que nous {3} (attendre) le suivant, mon frère {4} (acheter) un journal et moi, je {5} (regarder) les voyageurs. Soudain, une dame {6} (laisser) tomber sa valise et je {7} (courir) l’aider.",
+ [{o:["sommes arrivés","arrivions","étions arrivés"],a:0,w:"C’est un événement précis : passé composé. Arriver se conjugue avec être.",r:"auxEtre"},
+  {o:["était déjà parti","est déjà parti","partait déjà"],a:0,w:"Le train est parti avant notre arrivée : c’est antérieur, donc plus-que-parfait (était + parti). Le mot « déjà » aide.",r:"pqp"},
+  {o:["attendions","avons attendu","attendons"],a:0,w:"« Pendant que » : action qui dure pendant qu’une autre se passe : imparfait.",r:"inter"},
+  {o:["a acheté","achetait","avait acheté"],a:0,w:"Acheter un journal est une action précise et terminée : passé composé."},
+  {o:["regardais","ai regardé","avais regardé"],a:0,w:"Action qui dure (regarder les voyageurs) pendant l’attente : imparfait.",r:"inter"},
+  {o:["a laissé","laissait","avait laissé"],a:0,w:"« Soudain » annonce un événement qui arrive d’un coup : passé composé."},
+  {o:["ai couru","courais","avais couru"],a:0,w:"Réaction immédiate à l’événement : action précise, donc passé composé."}]);
+P(4,"passe","pqp","La fête de Camille",
+ "Le jour de la fête, Camille {1} (se réveiller) à six heures. La veille, elle {2} (préparer) tous les gâteaux, mais elle {3} (oublier) d’acheter des bougies. Elle {4} (courir) jusqu’au magasin, qui {5} (être) encore fermé. Elle {6} (patienter) dix minutes devant la porte.",
+ [{o:["s’est réveillée","se réveillait","s’était réveillée"],a:0,w:"Événement précis qui ouvre le récit : passé composé avec être, accordé avec Camille (féminin).",r:"ppAccord"},
+  {o:["avait préparé","a préparé","préparait"],a:0,w:"« La veille » : c’est avant le jour de la fête, donc avant les autres actions du récit : plus-que-parfait.",r:"pqp"},
+  {o:["avait oublié","a oublié","oubliait"],a:0,w:"L’oubli a eu lieu avant le réveil : plus-que-parfait.",r:"pqp"},
+  {o:["a couru","courait","avait couru"],a:0,w:"Action précise qui fait avancer l’histoire : passé composé."},
+  {o:["était","a été","avait été"],a:0,w:"On décrit l’état du magasin à ce moment-là : imparfait."},
+  {o:["a patienté","patientait","avait patienté"],a:0,w:"La durée est limitée (dix minutes) et l’action est terminée : passé composé.",r:"impPC"}]);
+P(4,"passe","pqp","Le stylo oublié",
+ "Quand les élèves {1} dans la classe, la maîtresse {2} le titre au tableau avant leur arrivée. Pendant qu’ils {3} , elle {4} les feuilles. Léo, qui {5} son stylo, {6} en emprunter un. (Conjugue : entrer, écrire, s’installer, distribuer, oublier, devoir.)",
+ [{a:["sont entrés","sont entrées"],w:"Événement précis : passé composé. Entrer se conjugue avec être et s’accorde avec « les élèves » : sont entrés.",r:"auxEtre"},
+  {a:["avait écrit"],w:"Le titre était écrit avant leur arrivée : action antérieure, donc plus-que-parfait : avait écrit.",r:"pqp"},
+  {a:["s’installaient"],w:"« Pendant qu’ » : action qui dure : imparfait. Verbe pronominal : ils s’installaient.",r:"inter"},
+  {a:["distribuait"],w:"Action qui dure en même temps que s’installent les élèves : imparfait.",r:"inter"},
+  {a:["avait oublié"],w:"Léo avait oublié son stylo avant de devoir en emprunter un : action antérieure, donc plus-que-parfait.",r:"pqp"},
+  {a:["a dû"],w:"Événement précis qui arrive ensuite : passé composé. Le participe passé de devoir est « dû ».",r:"pcForm"}]);
+Q(4,"passe","pqp","Complète : « Quand je suis arrivé, le film ___ déjà commencé. »",["avait","a","était"],0,"Le film a commencé avant mon arrivée : plus-que-parfait (imparfait de avoir + participe passé) : avait commencé.");
+F(4,"passe","pqp","Écris au plus-que-parfait : « Elle (finir) ___ ses devoirs avant que sa copine arrive. »",["avait fini"],"L’action est terminée avant une autre : plus-que-parfait = avait + fini.");
+F(4,"passe","pqp","Écris au plus-que-parfait : « Nous (partir) ___ avant la pluie. »",["étions partis","étions parties"],"Partir se conjugue avec être. Plus-que-parfait : étions + partis (accord avec nous).");
+Q(4,"passe","pqp","Complète : « Hier, j’ai retrouvé le livre que j’___ perdu la semaine dernière. »",["avais","ai","aurai"],0,"La perte a eu lieu avant que je retrouve le livre : plus-que-parfait : j’avais perdu.");
+Q(4,"passe","ppAccord","Complète : « Elle s’est ___ la jambe. »",["cassé","cassée","cassés"],0,"Dans « elle s’est cassé la jambe », le COD est « la jambe », placé après le verbe : le participe ne s’accorde pas.");
+F(4,"passe","ppAccord","Accorde le participe passé : « Les fleurs que Marie a (cueillir) ___ sentent bon. »",["cueillies"],"Le COD « que » (= les fleurs) est placé avant le verbe avoir : on accorde au féminin pluriel : cueillies.");
+Q(4,"passe","inter","Quelle phrase est correcte ?",["Quand nous sommes arrivés, la fête avait déjà commencé.","Quand nous arrivions, la fête a déjà commencé.","Quand nous sommes arrivés, la fête a déjà commencé."],0,"La fête a commencé avant notre arrivée : on utilise le plus-que-parfait (avait commencé) pour l’action la plus ancienne.");
+F(4,"passe","impPC","Écris au temps qui convient : « Le mois dernier, mon oncle (avoir) ___ un accident. »",["a eu"],"« Le mois dernier » indique un événement précis et terminé : passé composé : il a eu.");
+F(4,"passe","impPC","Écris au temps qui convient : « Quand il était jeune, il (avoir) ___ une moto. »",["avait"],"« Quand il était jeune » indique une période : on décrit sa situation à cette époque : imparfait.");
+F(4,"conj","futur","Écris au futur : « Demain, vous (pouvoir) ___ venir. »",["pourrez"],"Pouvoir au futur : pourr- + -ez → vous pourrez (avec deux r).");
+F(4,"conj","futur","Écris au futur : « Nous (voir) ___ la mer demain. »",["verrons"],"Voir au futur : verr- + -ons → nous verrons (avec deux r).");
+F(4,"conj","condit","Écris au conditionnel : « Si j’avais plus de temps, j’(aller) ___ à la piscine. »",["irais"],"Après « si » + imparfait : conditionnel. Aller → ir- + -ais : j’irais.");
+Q(4,"conj","condit","Quelle phrase est correcte ?",["Si tu venais, nous jouerions.","Si tu viendrais, nous jouerions.","Si tu viendras, nous jouerions."],0,"Après « si », on n’écrit ni conditionnel ni futur : si + imparfait, puis conditionnel.");
+Q(4,"ortho","hom_peu","Complète : « Il ___ venir demain. »",["peut","peu","peux"],0,"On peut dire « il pouvait » : verbe pouvoir. Avec « il », on écrit peut.");
+Q(4,"ortho","hom_pret","Complète : « Elle est ___ à partir. »",["prête","près","prêt"],0,"« prêt » s’accorde avec le sujet (elle est prête). « près » veut dire « pas loin » et ne change jamais.");
+Q(4,"ortho","hom_plus","Complète : « Demain, je me lèverai ___ . » (avant l’heure habituelle)",["plus tôt","plutôt"],0,"Le contraire de « plus tard » est « plus tôt », en deux mots. « Plutôt » veut dire « de préférence ».");
+Q(4,"ortho","sv","Complète : « Le chien et le chat ___ dans le jardin. »",["jouent","joue","jouons"],0,"Il y a deux sujets (le chien et le chat) : ils jouent, au pluriel.");
+Q(4,"gram","pron","Remplace les groupes : « Je donne le livre à ma sœur. » Quelle phrase est correcte ?",["Je le lui donne.","Je lui le donne.","Je la lui donne."],0,"« le livre » (COD, masculin) → le ; « à ma sœur » (COI) → lui. On place « le » avant « lui » : je le lui donne.");
+Q(4,"gram","fonc","Dans « Mes cousins ont téléphoné à leur grand-mère. », « à leur grand-mère » est…",["un COI","un COD","un complément de lieu"],0,"On dit « téléphoner à quelqu’un » : le complément est introduit par « à » et répond à « à qui ? » : c’est un COI.");
+Q(4,"gram","voc","Quel mot contient un préfixe qui signifie « de nouveau » ?",["refaire","défaire","contrefaire"],0,"Le préfixe re- veut dire « de nouveau » : refaire, c’est faire encore. Dé- exprime plutôt le contraire (défaire).");
+Q(4,"gram","fam","Quel mot est de la famille de « porter » ?",["transporter","portrait","portail"],0,"Transporter contient le radical « port- » (porter d’un endroit à un autre). Portrait et portail ont une autre origine.");
+/* ===================== QUESTIONS SUPPLÉMENTAIRES (banque étendue) ===================== */
+/* Niveau 1 */
+Q(1,"passe","tps","Demain, nous irons au zoo. Quel est le temps du verbe « irons » ?",["futur simple","imparfait","passé composé"],0,"« Demain » annonce le futur. « irons » est le futur d’aller (irr- + -ons).");
+Q(1,"passe","tps","Tu as fini ton dessin. Quel est le temps du verbe ?",["passé composé","imparfait","futur simple"],0,"« as fini » est formé de avoir au présent + le participe passé « fini » : c’est le passé composé.");
+Q(1,"passe","impForm","Quelle forme est à l’imparfait ?",["il mangeait","il a mangé","il mangera"],0,"« mangeait » est en un seul mot et se termine par -ait : imparfait. « a mangé » est un passé composé, « mangera » un futur.");
+F(1,"passe","pcForm","Écris au passé composé : « Hier, nous (finir) ___ le puzzle. »",["avons fini"],"Finir se conjugue avec avoir : nous avons + fini.");
+F(1,"passe","impForm","Écris à l’imparfait : « Autrefois, il (faire) ___ très froid ici. »",["faisait"],"Nous faisons → on garde « fais- » et on ajoute -ait : il faisait. « Autrefois » annonce un imparfait.");
+Q(1,"passe","auxEtre","Complète : « Elle ___ mangé toute sa part. »",["a","est","ont"],0,"Manger se conjugue avec avoir : elle a mangé.");
+F(1,"conj","futur","Écris au futur : « Demain, nous (être) ___ à l’heure. »",["serons"],"Être au futur : je serai, tu seras, il sera, nous serons… Le radical est ser-.");
+Q(1,"gram","voc","Quel mot veut dire presque la même chose que « gentil » ?",["aimable","méchant","petit"],0,"Gentil et aimable sont des synonymes.");
+F(1,"ortho","gn","Écris au pluriel : « un cheval blanc »",["des chevaux blancs"],"Les noms en -al font -aux au pluriel : un cheval → des chevaux. L’adjectif prend un s : blancs.");
+Q(1,"ortho","hom_a","Complète : « Il ___ plu toute la journée. »",["a","à"],0,"On peut dire « il avait plu » : c’est le verbe avoir, donc « a ».");
+/* Niveau 2 */
+F(2,"passe","inter","Écris au bon temps : « Il (pleuvoir) ___ quand nous avons quitté la maison. »",["pleuvait"],"« pleuvait » est le décor qui dure ; « nous avons quitté » est l’action précise. Le décor se met à l’imparfait.");
+Q(2,"passe","inter","Complète : « La nuit, le chat ___ (dormir) sur le canapé, mais ce soir-là, il ___ (sauter) sur la table. »",["dormait … a sauté","a dormi … sautait","dormait … sautait"],0,"« La nuit » = habitude : imparfait. « Ce soir-là » = événement précis : passé composé.");
+F(2,"passe","auxEtre","Écris au passé composé : « Hier, les filles (s’habiller) ___ très vite. »",["se sont habillées"],"Verbe pronominal : on utilise être. Le participe s’accorde avec « les filles » (féminin pluriel) : se sont habillées.");
+Q(2,"ortho","hom_ces","Complète : « ___ chaussures-là sont neuves. »",["Ces","Ses"],0,"On peut ajouter « -là » : ces chaussures-là. Il s’agit de montrer, donc « ces ».");
+Q(2,"ortho","hom_leur","Complète : « Je ___ parle souvent. »",["leur","leurs"],0,"Devant un verbe, « leur » ne prend jamais de s.");
+Q(2,"ortho","hom_ou","Complète : « Veux-tu du lait ___ du jus ? »",["ou","où"],0,"On peut dire « ou bien » : c’est un choix, donc « ou » sans accent.");
+Q(2,"gram","fam","Quel mot est de la famille de « dent » ?",["dentiste","danse","dessin"],0,"Dentiste contient le radical « dent- » (celui qui soigne les dents).");
+Q(2,"passe","ppAccord","Complète : « Les cousines de Léa sont ___ hier soir. »",["parties","partis","parti"],0,"Avec être, le participe passé s’accorde avec le sujet : « les cousines » est féminin pluriel → parties.");
+Q(2,"conj","presIrr","Complète au présent : « Tu ___ aller à la piscine. » (pouvoir)",["peux","peut","peus"],0,"Pouvoir : je peux, tu peux, il peut. Avec « tu », on écrit peux.");
+Q(2,"passe","pcForm","Quel est le participe passé du verbe « mettre » ?",["mis","mit","metté"],0,"Le participe passé de mettre est irrégulier : mis (comme pris).");
+/* Niveau 3 */
+P(3,"passe","impPC","La visite au musée",
+ "Samedi dernier, notre classe {1} (visiter) le musée de la ville. Devant l’entrée, un guide {2} (porter) un grand chapeau rouge. Pendant qu’il {3} (expliquer) l’histoire d’un vieux tableau, je {4} (regarder) les couleurs. Soudain, une cloche {5} (retentir) et tout le monde {6} (sursauter).",
+ [{o:["a visité","visitait","visite"],a:0,w:"« Samedi dernier » annonce un événement précis et terminé : passé composé."},
+  {o:["portait","a porté","porte"],a:0,w:"On décrit le guide : imparfait."},
+  {o:["expliquait","a expliqué","explique"],a:0,w:"« Pendant qu’ » : action qui dure en même temps qu’une autre : imparfait.",r:"inter"},
+  {o:["regardais","ai regardé","regarde"],a:0,w:"Autre action qui dure en même temps : imparfait.",r:"inter"},
+  {o:["a retenti","retentissait","avait retenti"],a:0,w:"« Soudain » annonce un événement : passé composé."},
+  {o:["a sursauté","sursautait","sursaute"],a:0,w:"Réaction immédiate à l’événement : passé composé."}]);
+P(3,"passe","impPC","Le pique-nique",
+ "Dimanche, nous {1} (aller) pique-niquer au bord du lac. Il {2} (faire) très chaud et il n’y {3} (avoir) pas un nuage. Nous {4} (étendre) une nappe sur l’herbe et papa {5} (sortir) les sandwichs. Tout à coup, un chien {6} (voler) un sandwich et {7} (s’enfuir).",
+ [{o:["sommes allés","allions","allons"],a:0,w:"« Dimanche » : événement précis. Aller se conjugue avec être.",r:"auxEtre"},
+  {o:["faisait","a fait","fait"],a:0,w:"On décrit le temps qu’il fait : décor, donc imparfait."},
+  {o:["avait","a eu","a"],a:0,w:"Description du ciel : imparfait."},
+  {o:["avons étendu","étendions","avions étendu"],a:0,w:"Action précise qui lance le pique-nique : passé composé avec avoir.",r:"pcForm"},
+  {o:["a sorti","sortait","sort"],a:0,w:"Action précise : passé composé. Ici « sortir » a un COD (les sandwichs), on utilise avoir.",r:"auxEtre"},
+  {o:["a volé","volait","vole"],a:0,w:"« Tout à coup » annonce un événement soudain : passé composé."},
+  {o:["s’est enfui","s’enfuyait","s’est enfuie"],a:0,w:"Action qui suit : passé composé avec être ; le chien est masculin : s’est enfui.",r:"ppAccord"}]);
+P(3,"passe","impPC","La surprise pour papa",
+ "Quand j’étais petite, papa {1} (travailler) souvent le soir. Un soir, il {2} (s’endormir) sur le canapé. Ma sœur et moi, nous {3} (décider) de lui faire une surprise. Pendant que nous {4} (décorer) la pièce, il {5} (ronfler) doucement. Soudain, il {6} (ouvrir) les yeux et {7} (rester) sans voix.",
+ [{o:["travaillait","a travaillé","travaille"],a:0,w:"« Souvent » indique une habitude : imparfait."},
+  {o:["s’est endormi","s’endormait","s’endort"],a:0,w:"« Un soir » : événement précis : passé composé avec être.",r:"auxEtre"},
+  {o:["avons décidé","décidions","décidons"],a:0,w:"Décision précise qui lance l’histoire : passé composé."},
+  {o:["décorions","avons décoré","décorons"],a:0,w:"« Pendant que » : action qui dure en même temps qu’une autre : imparfait.",r:"inter"},
+  {o:["ronflait","a ronflé","ronfle"],a:0,w:"Action qui dure : imparfait.",r:"inter"},
+  {o:["a ouvert","ouvrait","avait ouvert"],a:0,w:"« Soudain » : événement : passé composé."},
+  {o:["est resté","restait","a resté"],a:0,w:"Rester se conjugue avec être : il est resté.",r:"auxEtre"}]);
+P(3,"passe","impPC","La panne de lumière",
+ "Il {1} (être) huit heures du soir. Maman {2} (préparer) le dîner et mon frère {3} (faire) ses devoirs. Tout à coup, la lumière {4} (s’éteindre). Nous {5} (rester) dans le noir quelques secondes, puis papa {6} (allumer) une bougie.",
+ [{o:["était","a été","est"],a:0,w:"On donne l’heure, c’est le décor : imparfait."},
+  {o:["préparait","a préparé","prépare"],a:0,w:"Action qui dure pendant la scène : imparfait."},
+  {o:["faisait","a fait","fait"],a:0,w:"Autre action qui dure : imparfait."},
+  {o:["s’est éteinte","s’éteignait","s’est éteint"],a:0,w:"« Tout à coup » : événement soudain : passé composé avec être, accordé avec « la lumière » (féminin).",r:"ppAccord"},
+  {o:["sommes restés","restions","avons resté"],a:0,w:"Action précise et brève : passé composé avec être (rester).",r:"auxEtre"},
+  {o:["a allumé","allumait","avait allumé"],a:0,w:"« Puis » annonce l’action suivante : passé composé."}]);
+P(3,"passe","impPC","Sous la pluie",
+ "Hier, il {1} depuis le matin quand, à quatre heures, nous {2} de l’école. Nous nous {3} sous un arbre et mon ami {4} son parapluie. Il {5} un grand parapluie bleu. Il nous {6} de rester dessous. (Conjugue : pleuvoir, sortir, abriter, ouvrir, avoir, proposer.)",
+ [{a:["pleuvait"],w:"« Depuis le matin » : une action qui dure, c’est le décor : imparfait."},
+  {a:["sommes sortis","sommes sorties"],w:"« À quatre heures » situe un événement précis : passé composé. Sortir se conjugue avec être et s’accorde avec « nous ».",r:"auxEtre"},
+  {a:["sommes abrités","sommes abritées"],w:"Verbe pronominal : être. On accorde avec le sujet : nous nous sommes abrités.",r:"ppAccord"},
+  {a:["a ouvert"],w:"Action précise : passé composé avec avoir : il a ouvert."},
+  {a:["avait"],w:"On décrit le parapluie : imparfait."},
+  {a:["a proposé"],w:"Action précise de l’ami : passé composé avec avoir : il a proposé.",r:"pcForm"}]);
+Q(3,"passe","ppAccord","Complète : « Les devoirs que j’ai ___ sont corrects. » (finir)",["finis","fini","finie"],0,"Avec avoir, on accorde avec le COD placé avant le verbe : « que » = les devoirs (masculin pluriel) → finis.");
+Q(3,"passe","ppAccord","Quelle phrase est correcte ?",["Ils se sont levés tôt.","Ils se sont levé tôt.","Ils se sont levées tôt."],0,"Le verbe pronominal « se lever » se conjugue avec être et le participe s’accorde avec le sujet « ils » (masculin pluriel) : levés.");
+F(3,"ortho","sv","Écris le verbe au présent : « Les chiens de mon voisin (aboyer) ___ toute la nuit. »",["aboient"],"Le sujet est « les chiens » (pluriel), même si « voisin » est juste avant le verbe : ils aboient.");
+Q(3,"conj","condit","Complète : « Si nous avions un jardin, nous ___ un chien. »",["aurions","aurons","avions"],0,"Après « si » + imparfait, on emploie le conditionnel : nous aurions.");
+Q(3,"gram","voc","Quel est le contraire de « lisible » ?",["illisible","délisible","malisible"],0,"Devant un l, le préfixe in- devient il- : illisible.");
+Q(3,"gram","fonc","Dans « Elle offre un cadeau à sa mère. », quel groupe est le COI ?",["à sa mère","un cadeau","elle"],0,"On offre « à qui ? » → à sa mère : complément d’objet indirect, introduit par « à ».");
+/* Niveau 4 */
+P(4,"passe","pqp","Le cadeau d’anniversaire",
+ "Le jour de son anniversaire, Hugo {1} (se lever) de très bonne heure. La veille, ses parents {2} (cacher) un grand paquet dans le salon. Quand Hugo {3} (entrer), il {4} (voir) le paquet et {5} (courir) vers lui. Il {6} (déchirer) le papier : c’{7} (être) le vélo dont il {8} (rêver) depuis longtemps.",
+ [{o:["s’est levé","se levait","s’était levé"],a:0,w:"Événement précis qui ouvre le récit : passé composé avec être.",r:"auxEtre"},
+  {o:["avaient caché","ont caché","cachaient"],a:0,w:"« La veille » : c’est avant le jour de l’anniversaire : plus-que-parfait.",r:"pqp"},
+  {o:["est entré","entrait","était entré"],a:0,w:"Action précise : passé composé. Entrer se conjugue avec être.",r:"auxEtre"},
+  {o:["a vu","voyait","avait vu"],a:0,w:"Action précise qui suit : passé composé."},
+  {o:["a couru","courait","avait couru"],a:0,w:"Action précise : passé composé avec avoir."},
+  {o:["a déchiré","déchirait","avait déchiré"],a:0,w:"Action précise : passé composé."},
+  {o:["était","a été","avait été"],a:0,w:"On décrit ce que c’est : imparfait.",r:"impPC"},
+  {o:["rêvait","a rêvé","avait rêvé"],a:0,w:"« Depuis longtemps » : action qui dure : imparfait.",r:"impPC"}]);
+P(4,"passe","pqp","Le retard de Lisa",
+ "Ce matin, Lisa {1} (se réveiller) en retard parce qu’elle {2} (se coucher) très tard la veille. Elle {3} (s’habiller) très vite, {4} (prendre) son sac et {5} (courir) jusqu’à l’arrêt. Quand elle {6} (arriver), le bus {7} (déjà partir).",
+ [{o:["s’est réveillée","se réveillait","s’était réveillée"],a:0,w:"Événement précis : passé composé avec être, accordé avec Lisa (féminin).",r:"ppAccord"},
+  {o:["s’était couchée","s’est couchée","se couchait"],a:0,w:"« La veille » est avant « ce matin » : plus-que-parfait (était + couchée).",r:"pqp"},
+  {o:["s’est habillée","s’habillait","s’était habillée"],a:0,w:"Action précise de la matinée : passé composé.",r:"ppAccord"},
+  {o:["a pris","prenait","avait pris"],a:0,w:"Action précise : passé composé de prendre : a pris.",r:"pcForm"},
+  {o:["a couru","courait","avait couru"],a:0,w:"Action précise : passé composé avec avoir."},
+  {o:["est arrivée","arrivait","était arrivée"],a:0,w:"« Quand » annonce l’action précise : passé composé avec être, accordé avec Lisa.",r:"auxEtre"},
+  {o:["était déjà parti","est déjà parti","partait déjà"],a:0,w:"Le bus est parti avant son arrivée : plus-que-parfait. « Déjà » aide.",r:"pqp"}]);
+P(4,"passe","pqp","Au marché",
+ "Quand nous {1} au marché, la vendeuse {2} les fruits sur le stand avant notre arrivée. Pendant que maman {3} des pommes, je {4} les étals. Soudain, un cri {5} et tout le monde {6} . (Conjugue : arriver, installer, choisir, regarder, retentir, se retourner.)",
+ [{a:["sommes arrivés","sommes arrivées"],w:"Événement précis : passé composé. Arriver se conjugue avec être.",r:"auxEtre"},
+  {a:["avait installé"],w:"Les fruits étaient installés avant notre arrivée : plus-que-parfait : avait installé.",r:"pqp"},
+  {a:["choisissait"],w:"« Pendant que » : action qui dure : imparfait. Choisir → choisiss- + -ait.",r:"inter"},
+  {a:["regardais"],w:"Autre action qui dure : imparfait : je regardais.",r:"inter"},
+  {a:["a retenti"],w:"« Soudain » : événement : passé composé : a retenti."},
+  {a:["s’est retourné"],w:"« Tout le monde » est masculin singulier : s’est retourné.",r:"ppAccord"}]);
+F(4,"passe","pqp","Écris au plus-que-parfait : « Quand nous sommes arrivés, ils (partir) ___ déjà. »",["étaient partis","étaient parties"],"Partir se conjugue avec être. Plus-que-parfait : étaient + partis. Ils sont partis avant notre arrivée.");
+Q(4,"passe","pqp","Complète : « Il a réussi parce qu’il ___ beaucoup travaillé. »",["avait","a","était"],0,"Le travail a eu lieu avant la réussite : plus-que-parfait : avait travaillé.");
+F(4,"passe","ppAccord","Accorde le participe passé : « Les lettres que tu as (écrire) ___ sont arrivées. »",["écrites"],"Le COD « que » (= les lettres) est placé avant le verbe avoir : on accorde au féminin pluriel : écrites.");
+F(4,"conj","condit","Écris au conditionnel : « Si tu me le demandais, je te l’(offrir) ___ . »",["offrirais"],"Après « si » + imparfait : conditionnel. Offrir → offrir- + -ais : j’offrirais.");
+F(4,"conj","futur","Écris au futur : « Elles (venir) ___ demain. »",["viendront"],"Venir au futur : viendr- + -ont → elles viendront.");
+Q(4,"ortho","hom_pret","Complète : « Quand il pleut, je reste ___ de la fenêtre. »",["près","prêt","prés"],0,"« près de » veut dire « pas loin de » et ne change jamais.");
+Q(4,"passe","inter","Quelle phrase est correcte ?",["Il pleuvait quand je suis sorti.","Il a plu quand je sortais.","Il pleut quand je suis sorti."],0,"Le décor (il pleuvait) est à l’imparfait ; l’action précise (je suis sorti) est au passé composé.");
+
+/* ===================== GÉNÉRATEUR D’EXERCICES (hors ligne, illimité) ===================== */
+var GEN=(function(){
+var cnt=0;
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function shuf(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function pickN(a,n){return shuf(a).slice(0,n);}
+var VOW=/^[aeiouyhàâéèêëîïôûù]/i;
+
+/* [infinitif, complément, radical imparfait, radical futur, participe, auxiliaire (a/e), cas (g=ger, c=cer)] */
+var V=[
+["jouer","dans la cour","jou","jouer","joué","a",""],
+["manger","des bonbons","mang","manger","mangé","a","g"],
+["chanter","une chanson","chant","chanter","chanté","a",""],
+["finir","les devoirs","finiss","finir","fini","a",""],
+["choisir","un cadeau","choisiss","choisir","choisi","a",""],
+["prendre","le bus","pren","prendr","pris","a",""],
+["faire","un dessin","fais","fer","fait","a",""],
+["dire","la vérité","dis","dir","dit","a",""],
+["voir","un film","voy","verr","vu","a",""],
+["lire","un livre","lis","lir","lu","a",""],
+["écrire","une lettre","écriv","écrir","écrit","a",""],
+["mettre","la table","mett","mettr","mis","a",""],
+["ouvrir","la fenêtre","ouvr","ouvrir","ouvert","a",""],
+["boire","du lait","buv","boir","bu","a",""],
+["dormir","toute la nuit","dorm","dormir","dormi","a",""],
+["courir","dans le jardin","cour","courr","couru","a",""],
+["attendre","le train","attend","attendr","attendu","a",""],
+["oublier","le cahier","oubli","oublier","oublié","a",""],
+["étudier","la leçon","étudi","étudier","étudié","a",""],
+["commencer","le travail","commenc","commencer","commencé","a","c"],
+["regarder","la télévision","regard","regarder","regardé","a",""],
+["écouter","de la musique","écout","écouter","écouté","a",""],
+["préparer","le repas","prépar","préparer","préparé","a",""],
+["ranger","la chambre","rang","ranger","rangé","a","g"],
+["nager","dans la rivière","nag","nager","nagé","a","g"],
+["avoir","de la chance","av","aur","eu","a",""],
+["être","en retard","ét","ser","été","a",""],
+["savoir","la réponse","sav","saur","su","a",""],
+["pouvoir","venir","pouv","pourr","pu","a",""],
+["vouloir","partir","voul","voudr","voulu","a",""],
+["devoir","partir","dev","devr","dû","a",""],
+["aller","au cinéma","all","ir","allé","e",""],
+["venir","à la maison","ven","viendr","venu","e",""],
+["partir","en vacances","part","partir","parti","e",""],
+["arriver","à l’heure","arriv","arriver","arrivé","e",""],
+["entrer","dans la classe","entr","entrer","entré","e",""],
+["sortir","de la maison","sort","sortir","sorti","e",""],
+["tomber","dans l’escalier","tomb","tomber","tombé","e",""],
+["rester","chez mamie","rest","rester","resté","e",""],
+["descendre","à la cave","descend","descendr","descendu","e",""],
+["monter","dans le bus","mont","monter","monté","e",""]
+];
+var IRREG_FUT={faire:1,voir:1,avoir:1,"être":1,savoir:1,pouvoir:1,vouloir:1,devoir:1,aller:1,venir:1,courir:1,boire:0};
+var WEIRD_PQP={avoir:1,"être":1,pouvoir:1,vouloir:1,devoir:1,savoir:1};
+function vAvoir(){return V.filter(function(v){return v[5]==="a";});}
+function vEtre(){return V.filter(function(v){return v[5]==="e";});}
+
+var SUBJ=[
+{t:"je",p:0,n:"s"},{t:"tu",p:1,n:"s"},{t:"il",p:2,g:"m",n:"s",id:1},{t:"elle",p:2,g:"f",n:"s",id:1},
+{t:"nous",p:3,n:"p"},{t:"vous",p:4,n:"p"},{t:"ils",p:5,g:"m",n:"p",id:1},{t:"elles",p:5,g:"f",n:"p",id:1},
+{t:"Léa",p:2,g:"f",n:"s",id:1},{t:"Tom",p:2,g:"m",n:"s",id:1},{t:"Nina",p:2,g:"f",n:"s",id:1},{t:"Hugo",p:2,g:"m",n:"s",id:1},
+{t:"mes cousines",p:5,g:"f",n:"p",id:1},{t:"mes frères",p:5,g:"m",n:"p",id:1},{t:"les enfants",p:5,g:"m",n:"p",amb:1,id:1}
+];
+function subj(any){var l=any?SUBJ:SUBJ.filter(function(s){return s.id;});return pick(l);}
+function sj(s,form){return (s.t==="je"&&VOW.test(form))?"j’":s.t+" ";}
+
+function fImp(v,p){var rad=v[2],e=["ais","ais","ait","ions","iez","aient"][p];if(v[6]==="g"&&e.charAt(0)==="a")return rad+"e"+e;if(v[6]==="c"&&e.charAt(0)==="a")return rad.slice(0,-1)+"ç"+e;return rad+e;}
+function fFut(v,p){return v[3]+["ai","as","a","ons","ez","ont"][p];}
+function fCond(v,p){return v[3]+["ais","ais","ait","ions","iez","aient"][p];}
+function fAux(v,p){return v[5]==="a"?["ai","as","a","avons","avez","ont"][p]:["suis","es","est","sommes","êtes","sont"][p];}
+function fAuxImp(v,p){return v[5]==="a"?["avais","avais","avait","avions","aviez","avaient"][p]:["étais","étais","était","étions","étiez","étaient"][p];}
+function ppAg(v,s,g){var gg=g||s.g;return v[5]==="e"?v[4]+(gg==="f"?"e":"")+(s.n==="p"?"s":""):v[4];}
+function fPC(v,s,g){return fAux(v,s.p)+" "+ppAg(v,s,g);}
+function fPQP(v,s,g){return fAuxImp(v,s.p)+" "+ppAg(v,s,g);}
+function ansPC(v,s){if(v[5]==="e"&&s.amb)return [fPC(v,s,"m"),fPC(v,s,"f")];return [fPC(v,s)];}
+function ansPQP(v,s){if(v[5]==="e"&&s.amb)return [fPQP(v,s,"m"),fPQP(v,s,"f")];return [fPQP(v,s)];}
+
+function mk(l,t,r,k,o){o.id="g"+(++cnt);o.l=l;o.t=t;o.r=r;o.k=k;o.gen=true;return o;}
+function qcm(l,t,r,q,right,wrongs,w){return mk(l,t,r,"qcm",{q:q,o:[right].concat(wrongs),a:0,w:w});}
+function fill(l,t,r,q,a,w){return mk(l,t,r,"fill",{q:q,a:a,w:w});}
+
+var CUE_IMP=["Autrefois,","Chaque jour,","D’habitude,","Souvent,","Tous les soirs,","Toujours,"];
+var CUE_PC=["Hier,","Ce matin,","Samedi dernier,","Un jour,","Soudain,","Tout à coup,"];
+var CUE_FUT=["Demain,","Bientôt,","La semaine prochaine,","Dans deux jours,"];
+
+function whyImp(v,s,cue,ans){
+  var w="« "+cue.replace(/,$/,"")+" » indique une habitude ou une description dans le passé : on utilise l’imparfait. ";
+  if(v[0]==="être")return w+"Être est irrégulier : il garde le radical ét- (j’étais, tu étais, il était…). Ici : "+ans+".";
+  var end=["ais","ais","ait","ions","iez","aient"][s.p];
+  w+=v[0]+" : on prend « nous » au présent, on enlève -ons ("+v[2]+"-) et on ajoute -"+end+" → "+ans+".";
+  if(v[6]==="g"&&end.charAt(0)==="a")w+=" On garde le e après le g devant a pour que le g reste doux.";
+  if(v[6]==="c"&&end.charAt(0)==="a")w+=" On écrit ç devant a pour garder le son [s].";
+  if(v[6]==="c"&&end.charAt(0)==="i")w+=" Devant i, le c garde le son [s] : pas de cédille.";
+  if(v[6]==="g"&&end.charAt(0)==="i")w+=" Devant i, le g est déjà doux : pas besoin du e.";
+  return w;
+}
+function whyPC(v,s,cue,ans){
+  var w="« "+cue.replace(/,$/,"")+" » annonce un événement précis et terminé : passé composé. ";
+  w+=v[0]+" se conjugue avec "+(v[5]==="a"?"avoir":"être")+" : "+ans+".";
+  if(v[5]==="e"){var acc=[];if(s.g==="f")acc.push("e (féminin)");if(s.n==="p")acc.push("s (pluriel)");if(acc.length)w+=" Avec être, on accorde le participe avec le sujet : on ajoute "+acc.join(" et ")+".";}
+  else if(v[4]!=="joué"&&/^(pris|fait|dit|vu|lu|écrit|mis|ouvert|bu|eu|été|su|pu|dû|couru)$/.test(v[4]))w+=" « "+v[4]+" » est un participe passé irrégulier à connaître.";
+  return w;
+}
+
+/* ---------- Générateurs de questions simples ---------- */
+function gImp(l){
+  var pool=V.filter(function(v){return l>=2?true:!v[6];});
+  if(l>=2&&Math.random()<0.5)pool=V.filter(function(v){return v[6]||v[0]==="oublier"||v[0]==="étudier";});
+  var v=pick(pool),s=subj(true),cue=pick(CUE_IMP),a=fImp(v,s.p);
+  return fill(l,"passe","impForm","Écris à l’imparfait : « "+cue+" "+sj(s,a)+"("+v[0]+") ___ "+v[1]+". »",[a],whyImp(v,s,cue,a));
+}
+function gPC(l){
+  var v=(l>=2&&Math.random()<0.55)?pick(vEtre()):pick(V);
+  var s=subj(v[5]!=="e"),cue=pick(CUE_PC),ans=ansPC(v,s);
+  return fill(l,"passe","pcForm","Écris au passé composé : « "+cue+" "+sj(s,ans[0])+"("+v[0]+") ___ "+v[1]+". »",ans,whyPC(v,s,cue,ans[0]));
+}
+function gFut(l){
+  var v=pick(l>=2?V:V.filter(function(v){return !IRREG_FUT[v[0]]||Math.random()<0.4;})),s=subj(true),cue=pick(CUE_FUT),a=fFut(v,s.p);
+  var w="« "+cue.replace(/,$/,"")+" » annonce le futur. ";
+  var reg=/re$/.test(v[0])?v[0].slice(0,-1):v[0];
+  if(v[3]!==reg)w+=v[0]+" a un radical irrégulier au futur : "+v[3]+"-. ";
+  else w+="Futur : infinitif ("+v[3]+") + "+["-ai","-as","-a","-ons","-ez","-ont"][s.p]+". ";
+  w+="On écrit : "+a+".";
+  return fill(l,"conj","futur","Écris au futur : « "+cue+" "+sj(s,a)+"("+v[0]+") ___ "+v[1]+". »",[a],w);
+}
+var TN={imp:"imparfait",pc:"passé composé",fut:"futur simple",pqp:"plus-que-parfait",cond:"conditionnel présent"};
+function gIdent(l){
+  var v=pick(V),s=SUBJ[Math.floor(Math.random()*8)];
+  var kinds=l>=4?["imp","pc","fut","pqp","cond"]:["imp","pc","fut"];
+  var k=pick(kinds),f;
+  if(k==="imp")f=fImp(v,s.p);else if(k==="fut")f=fFut(v,s.p);else if(k==="cond")f=fCond(v,s.p);else if(k==="pc")f=fPC(v,s);else f=fPQP(v,s);
+  var wr=shuf(kinds.filter(function(x){return x!==k;})).slice(0,2).map(function(x){return TN[x];});
+  var why={imp:"Un seul mot qui se termine par -ais, -ait, -ions, -iez ou -aient : imparfait.",
+    pc:"Deux mots : avoir ou être au présent + un participe passé : passé composé.",
+    fut:"Le verbe se termine par -ai, -as, -a, -ons, -ez, -ont après le radical du futur (souvent l’infinitif) : futur simple.",
+    pqp:"Deux mots : avoir ou être à l’imparfait + un participe passé : plus-que-parfait.",
+    cond:"Radical du futur + terminaison de l’imparfait (-ais, -ait, -ions…) : conditionnel présent."}[k];
+  return qcm(l,"passe","tps","Quel est le temps de « "+sj(s,f)+f+" » ?",TN[k],wr,why+" Ici : « "+f+" ».");
+}
+function gAux(l){
+  var v=pick(V.filter(function(x){return !WEIRD_PQP[x[0]]||x[5]==="e";})),s=subj(false),cue=pick(CUE_PC);
+  var pp=ppAg(v,s),right=fAux(v,s.p),other=fAux({5:v[5]==="a"?"e":"a"},s.p),w3=fAux({5:v[5]},s.p===2?5:2);
+  var q="Complète : « "+cue+" "+s.t+" ___ "+pp+" "+v[1]+". »";
+  var why=v[0]+" se conjugue avec "+(v[5]==="a"?"avoir":"être")+(v[5]==="e"?" (verbe de mouvement)":"")+" : "+s.t+" "+right+" "+pp+".";
+  return qcm(l,"passe","auxEtre",q,right,[other,w3],why);
+}
+function gCue(l){
+  var v=pick(V.filter(function(v){return !WEIRD_PQP[v[0]];})),s=subj(false);
+  var imp=Math.random()<0.5,cue=pick(imp?CUE_IMP:CUE_PC);
+  var ri=fImp(v,s.p),rp=fPC(v,s),rf=fFut(v,s.p);
+  var right=imp?ri:rp,wr=imp?[rp,rf]:[ri,rf];
+  var w="« "+cue.replace(/,$/,"")+" » "+(imp?"indique une habitude : imparfait.":"annonce un événement précis : passé composé.");
+  return qcm(l,"passe","impPC","Complète : « "+cue+" "+s.t+" ___ ("+v[0]+") "+v[1]+". »",right,wr,w);
+}
+var PRON=[["se lever","lev","levé","c"],["se coucher","couch","couché","c"],["se réveiller","réveill","réveillé","c"],["s’habiller","habill","habillé","v"],["s’endormir","endormiss","endormi","v"],["se promener","promen","promené","c"],["s’arrêter","arrêt","arrêté","v"],["se dépêcher","dépêch","dépêché","c"],["s’amuser","amus","amusé","v"],["s’installer","install","installé","v"],["s’enfuir","enfuy","enfui","v"]];
+function gPron(l){
+  var pr=pick(PRON),s=subj(false),cue=pick(CUE_PC),pl=s.n==="p";
+  var pp=pr[2]+(s.g==="f"?"e":"")+(pl?"s":"");
+  var ans=[(pl?"se sont ":"s’est ")+pp];
+  if(s.amb)ans=["se sont "+pr[2]+"s","se sont "+pr[2]+"es"];
+  var w="« "+cue.replace(/,$/,"")+" » annonce un événement précis : passé composé. Un verbe pronominal se conjugue toujours avec être : "+ans[0]+".";
+  if(s.g==="f"||pl)w+=" Le participe s’accorde avec le sujet ("+[s.g==="f"?"féminin":"",pl?"pluriel":""].filter(Boolean).join(", ")+").";
+  return fill(l,"passe","auxEtre","Écris au passé composé : « "+cue+" "+s.t+" ("+pr[0]+") ___ . »",ans,w);
+}
+function gPPe(l){
+  var v=pick(vEtre()),s=subj(false);
+  var right=ppAg(v,s),forms=shuf([v[4],v[4]+"e",v[4]+"s",v[4]+"es"].filter(function(x){return x!==right;})).slice(0,2);
+  var w="Avec être, le participe passé s’accorde avec le sujet « "+s.t+" » ("+(s.g==="f"?"féminin":"masculin")+" "+(s.n==="p"?"pluriel":"singulier")+") : "+right+".";
+  var cue=pick(CUE_PC);
+  return qcm(l,"passe","ppAccord","Complète : « "+cue+" "+s.t+" "+fAux(v,s.p)+" ___ ("+v[0]+") "+v[1]+". »",right,forms,w);
+}
+function gPQP(l){
+  var v=pick(V.filter(function(x){return !WEIRD_PQP[x[0]];})),s=subj(false);
+  var ans=ansPQP(v,s);
+  var w="Les actions sont terminées avant « nous sommes arrivés » : plus-que-parfait = imparfait de "+(v[5]==="a"?"avoir":"être")+" + participe passé : "+ans[0]+".";
+  if(v[5]==="e")w+=" Avec être, on accorde le participe avec le sujet.";
+  return fill(l,"passe","pqp","Écris au plus-que-parfait : « Quand nous sommes arrivés, "+s.t+" ("+v[0]+") ___ déjà "+v[1]+". »",ans,w);
+}
+function gCond(l){
+  var v=pick(V.filter(function(x){return x[0]!=="être"&&x[0]!=="avoir";})),s=subj(true),a=fCond(v,s.p);
+  var pre=pick(["Si j’avais plus de temps,","S’il faisait beau,","Si nous étions riches,","Si tu me le demandais,"]);
+  var w="Après « si » + imparfait, on emploie le conditionnel : radical du futur ("+v[3]+"-) + terminaison de l’imparfait ("+["-ais","-ais","-ait","-ions","-iez","-aient"][s.p]+") → "+a+".";
+  return fill(l,"conj","condit","Écris au conditionnel : « "+pre+" "+sj(s,a)+"("+v[0]+") ___ "+v[1]+". »",[a],w);
+}
+
+/* ---------- Deux propositions : imparfait + passé composé ---------- */
+var INTER=[
+["Nous",["jouer","jouions","avons joué"],"dehors","l’orage",["éclater","éclatait","a éclaté"],""],
+["Tom",["dessiner","dessinait","a dessiné"],"dans sa chambre","sa sœur",["entrer","entrait","est entrée"],"sans frapper"],
+["Les enfants",["manger","mangeaient","ont mangé"],"dans la cuisine","la lumière",["s’éteindre","s’éteignait","s’est éteinte"],"d’un coup"],
+["Nous",["traverser","traversions","avons traversé"],"la rue","une voiture",["arriver","arrivait","est arrivée"],"à toute vitesse"],
+["Léa",["se promener","se promenait","s’est promenée"],"dans le parc","un chien",["apparaître","apparaissait","est apparu"],"devant elle"],
+["Papa",["cuisiner","cuisinait","a cuisiné"],"le dîner","les voisins",["sonner","sonnaient","ont sonné"],"à la porte"],
+["Nous",["regarder","regardions","avons regardé"],"un film","la télévision",["tomber","tombait","est tombée"],"en panne"],
+["Mon frère",["faire","faisait","a fait"],"ses devoirs","la lampe",["s’éteindre","s’éteignait","s’est éteinte"],"brusquement"],
+["Les élèves",["écrire","écrivaient","ont écrit"],"la dictée","la maîtresse",["entrer","entrait","est entrée"],"dans la classe"],
+["Tom",["nager","nageait","a nagé"],"dans la mer","un dauphin",["sortir","sortait","est sorti"],"de l’eau"],
+["Maman",["lire","lisait","a lu"],"le journal","le téléphone",["sonner","sonnait","a sonné"],"fort"],
+["Nous",["marcher","marchions","avons marché"],"dans la forêt","la pluie",["commencer","commençait","a commencé"],"à tomber"]
+];
+var HAB=[
+["Chaque été, nous",["aller","allions","sommes allés"],"à la mer","Un été, nous",["voir","voyions","avons vu"],"un dauphin"],
+["Tous les matins, Léa",["prendre","prenait","a pris"],"le bus","Ce matin-là, elle",["marcher","marchait","a marché"],"jusqu’à l’école"],
+["D’habitude, Tom",["se lever","se levait","s’est levé"],"à sept heures","Un dimanche, il",["dormir","dormait","a dormi"],"jusqu’à midi"],
+["Souvent, mes parents",["aller","allaient","sont allés"],"au cinéma","Samedi dernier, ils",["choisir","choisissaient","ont choisi"],"un film d’horreur"],
+["Chaque soir, papa",["lire","lisait","a lu"],"une histoire","Ce soir-là, il",["oublier","oubliait","a oublié"],"le livre"],
+["Autrefois, mamie",["habiter","habitait","a habité"],"à la campagne","Un jour, elle",["déménager","déménageait","a déménagé"],"en ville"],
+["Tous les jours, nous",["jouer","jouions","avons joué"],"dans la cour","Un jour, nous",["trouver","trouvions","avons trouvé"],"un chaton"],
+["Pendant les vacances, Nina",["nager","nageait","a nagé"],"tous les jours","Un jour, elle",["croiser","croisait","a croisé"],"une tortue"]
+];
+function gInter(l){
+  var d=pick(INTER),a=d[1],b=d[4];
+  var right=a[1]+" … "+b[2],swapped=a[2]+" … "+b[1],both=Math.random()<0.5?a[1]+" … "+b[1]:a[2]+" … "+b[2];
+  var q="Complète : « "+d[0]+" ___ ("+a[0]+") "+d[2]+" quand "+d[3]+" ___ ("+b[0]+")"+(d[5]?" "+d[5]:"")+". »";
+  var w="« "+a[1]+" » est l’action en cours (imparfait). « "+b[2]+" » est l’événement qui l’interrompt d’un coup (passé composé).";
+  return qcm(l,"passe","inter",q,right,[swapped,both],w);
+}
+function gHab(l){
+  var d=pick(HAB),a=d[1],b=d[4];
+  var right=a[1]+" … "+b[2],swapped=a[2]+" … "+b[1],both=Math.random()<0.5?a[1]+" … "+b[1]:a[2]+" … "+b[2];
+  var q="Complète : « "+d[0]+" ___ ("+a[0]+") "+d[2]+". "+d[3]+" ___ ("+b[0]+") "+d[5]+". »";
+  var w="La première phrase parle d’une habitude : imparfait ("+a[1]+"). La deuxième parle d’un événement précis : passé composé ("+b[2]+").";
+  return qcm(l,"passe","impPC",q,right,[swapped,both],w);
+}
+
+/* ---------- Orthographe ---------- */
+var NAMES=["Léa","Tom","Nina","Hugo","Emma","Jules","Lina","Léo"];
+var HOM=[
+["hom_a",["a","à"],[["{N} ___ un chat.","a"],["{N} va ___ l’école.","à"],["Il pense ___ ses vacances.","à"],["{N} ___ très faim.","a"],["Je parle ___ {N}.","à"],["{N} ___ perdu ses clés.","a"],["Nous allons ___ la piscine.","à"]],"On peut dire « avait » : verbe avoir, donc « a ». On ne peut pas dire « avait » : préposition « à »."],
+["hom_et",["est","et"],[["{N} ___ en retard.","est"],["{N} ___ {M} jouent aux cartes.","et"],["Le chat ___ sur le canapé.","est"],["Il mange une pomme ___ une poire.","et"],["Mon frère ___ à l’école.","est"],["Nous avons du pain ___ du fromage.","et"]],"On peut dire « était » : verbe être, donc « est ». Sinon c’est « et » (et puis)."],
+["hom_son",["sont","son"],[["Les enfants ___ contents.","sont"],["{N} range ___ cartable.","son"],["Mes amis ___ arrivés.","sont"],["{N} a oublié ___ stylo.","son"],["Elles ___ en vacances.","sont"],["Il aime ___ chien.","son"]],"On peut dire « étaient » : verbe être, donc « sont ». On peut dire « mon » : déterminant, donc « son »."],
+["hom_on",["ont","on"],[["Les élèves ___ fini.","ont"],["___ joue au foot ce soir.","On"],["Mes cousins ___ un grand jardin.","ont"],["Quand ___ est fatigué, on dort.","on"],["Elles ___ gagné le match.","ont"]],"On peut dire « avaient » : verbe avoir, donc « ont ». On peut dire « il » : pronom, donc « on »."],
+["hom_ce",["se","ce"],[["{N} ___ lave les mains.","se"],["___ gâteau est délicieux.","Ce"],["Il ___ lève à sept heures.","se"],["Je n’aime pas ___ film.","ce"],["Les enfants ___ dépêchent.","se"]],"« se » se place devant un verbe. « ce » se place devant un nom."],
+["hom_ces",["ses","ces"],[["{N} range ___ affaires.","ses"],["___ fleurs sentent bon.","Ces"],["Il a perdu ___ gants.","ses"],["Regarde ___ nuages-là !","Ces"]],"« ses » veut dire « à lui, à elle » (on peut dire « mes »). « ces » sert à montrer (on peut ajouter -ci ou -là)."],
+["hom_leur",["leurs","leur"],[["Les enfants rangent ___ jouets.","leurs"],["Les élèves aiment ___ école.","leur"],["Je ___ parle souvent.","leur"],["Ils ont perdu ___ clés.","leurs"]],"« leurs » devant un nom pluriel ; « leur » devant un nom singulier ou un verbe."],
+["hom_ou",["où","ou"],[["___ habites-tu ?","Où"],["Veux-tu du thé ___ du café ?","ou"],["Je ne sais pas ___ il est.","où"],["Tu préfères le rouge ___ le bleu ?","ou"]],"« où » parle d’un lieu (pas de « ou bien »). « ou » = « ou bien » : un choix."],
+["hom_peu",["peut","peu","peux"],[["Il ___ venir demain.","peut"],["Tu ___ m’aider ?","peux"],["Il mange ___ de légumes.","peu"],["Je ___ lire sans lunettes.","peux"]],"« peut/peux » : verbe pouvoir (on peut dire « pouvait »). « peu » : pas beaucoup."]
+];
+function gHom(l){
+  var pool=l>=3?HOM:HOM.slice(0,l===1?6:8),h=pick(pool),t=pick(h[2]);
+  var n=pick(NAMES),m=pick(NAMES.filter(function(x){return x!==n;}));
+  var q="Complète : « "+t[0].replace("{N}",n).replace("{M}",m)+" »";
+  var right=t[1],wr=h[1].filter(function(x){return x.toLowerCase()!==right.toLowerCase();});
+  var cap1=right.charAt(0)!==right.charAt(0).toLowerCase();
+  wr=wr.map(function(x){return cap1?cap(x):x;});
+  return qcm(l,"ortho",h[0],q,right,wr,h[3]+" Ici : « "+right+" ».");
+}
+var NOUNS=[["chat","chats","m"],["cheval","chevaux","m"],["journal","journaux","m"],["oiseau","oiseaux","m"],["animal","animaux","m"],["bijou","bijoux","m"],["jeu","jeux","m"],["gâteau","gâteaux","m"],["tableau","tableaux","m"],["fleur","fleurs","f"],["maison","maisons","f"],["fille","filles","f"],["voisin","voisins","m"],["arbre","arbres","m"]];
+var ADJ=[["blanc","blanche","blancs","blanches"],["noir","noire","noirs","noires"],["rouge","rouge","rouges","rouges"],["fatigué","fatiguée","fatigués","fatiguées"],["heureux","heureuse","heureux","heureuses"],["gentil","gentille","gentils","gentilles"],["curieux","curieuse","curieux","curieuses"],["calme","calme","calmes","calmes"],["bleu","bleue","bleus","bleues"]];
+function gPlur(l){
+  var n=pick(NOUNS),a=pick(ADJ),f=n[2]==="f",det=f?"une":"un";
+  var ai=f?1:0,ap=f?3:2;
+  var ans="des "+n[1]+" "+a[ap];
+  var w="Le déterminant, le nom et l’adjectif sont au pluriel : des "+n[1]+" "+a[ap]+".";
+  if(n[1].slice(-1)==="x")w+=" « "+n[0]+" » fait « "+n[1]+" » au pluriel (-x ou -aux).";
+  return fill(l,"ortho","gn","Écris au pluriel : « "+det+" "+n[0]+" "+a[ai]+" »",[ans],w);
+}
+var FEM=[["voisin","voisine"],["ami","amie"],["cousin","cousine"],["lecteur","lectrice"],["chanteur","chanteuse"],["chien","chienne"],["lion","lionne"],["boulanger","boulangère"],["chat","chatte"],["élève","élève"]];
+function gFem(l){
+  var n=pick(FEM),a=pick(ADJ);
+  var w="Au féminin : « "+n[0]+" » → « "+n[1]+" » et l’adjectif s’accorde : "+a[1]+".";
+  return fill(l,"ortho","gn","Écris au féminin : « un "+n[0]+" "+a[0]+" »",["une "+n[1]+" "+a[1]],w);
+}
+var SVL=[["Les enfants de la voisine","jouer","jouent","dans la cour"],["Mon frère et moi","partir","partons","en vacances"],["Le chien et le chat","dormir","dorment","sur le canapé"],["La maîtresse de mes cousins","parler","parle","doucement"],["Mes parents","choisir","choisissent","un film"],["Les oiseaux du jardin","chanter","chantent","le matin"],["Toi et moi","aller","allons","au parc"],["Les élèves de la classe","finir","finissent","leurs devoirs"],["Tom et Léa","faire","font","un gâteau"],["Le professeur et ses élèves","visiter","visitent","le musée"],["Les chiens de mon voisin","aboyer","aboient","toute la nuit"],["La voisine de mes grands-parents","arroser","arrose","les fleurs"]];
+function gSV(l){
+  var d=pick(SVL);
+  return fill(l,"ortho","sv","Écris le verbe au présent : « "+d[0]+" ("+d[1]+") ___ "+d[3]+". »",[d[2]],"Pour trouver le sujet, on demande « qui est-ce qui + verbe ? ». Ici le sujet est « "+d[0]+" » : le verbe s’accorde avec lui → "+d[2]+".");
+}
+var OBJ=[["la lettre","f","s",["écrire","lire","ouvrir"]],["les photos","f","p",["prendre","regarder","voir"]],["le livre","m","s",["lire","acheter","choisir","oublier"]],["les devoirs","m","p",["finir","faire"]],["la robe","f","s",["choisir","acheter","mettre"]],["les fleurs","f","p",["acheter","choisir"]],["le gâteau","m","s",["préparer","choisir","finir"]],["les clés","f","p",["perdre","oublier","prendre"]],["la porte","f","s",["ouvrir"]],["les bonbons","m","p",["acheter","choisir"]]];
+var VP={"écrire":["écrire","écrit","écrite","écrits","écrites"],lire:["lire","lu","lue","lus","lues"],ouvrir:["ouvrir","ouvert","ouverte","ouverts","ouvertes"],prendre:["prendre","pris","prise","pris","prises"],regarder:["regarder","regardé","regardée","regardés","regardées"],voir:["voir","vu","vue","vus","vues"],acheter:["acheter","acheté","achetée","achetés","achetées"],choisir:["choisir","choisi","choisie","choisis","choisies"],oublier:["oublier","oublié","oubliée","oubliés","oubliées"],finir:["finir","fini","finie","finis","finies"],faire:["faire","fait","faite","faits","faites"],mettre:["mettre","mis","mise","mis","mises"],"préparer":["préparer","préparé","préparée","préparés","préparées"],perdre:["perdre","perdu","perdue","perdus","perdues"]};
+function gCOD(l){
+  var o=pick(OBJ),vb=VP[pick(o[3])],s=pick([{t:"que j’",a:"ai"},{t:"que tu ",a:"as"},{t:"que Léa ",a:"a"},{t:"que Tom ",a:"a"},{t:"que nous ",a:"avons"},{t:"qu’elle ",a:"a"}]);
+  var idx=o[1]==="m"?(o[2]==="s"?1:3):(o[2]==="s"?2:4),ans=vb[idx];
+  var q=cap(o[0])+" "+s.t+s.a+" ___ ("+vb[0]+") "+(o[2]==="s"?"est":"sont")+" ici.";
+  var w="Avec avoir, on accorde le participe avec le COD placé avant le verbe. Ici « que » remplace « "+o[0]+" » ("+(o[1]==="f"?"féminin":"masculin")+" "+(o[2]==="s"?"singulier":"pluriel")+") : "+ans+".";
+  if(Math.random()<0.5){
+    var wr=shuf([vb[1],vb[2],vb[3],vb[4]].filter(function(x,i,a2){return x!==ans&&a2.indexOf(x)===i;})).slice(0,2);
+    return qcm(l,"passe","ppAccord","Complète : « "+q+" »",ans,wr,w);
+  }
+  return fill(l,"passe","ppAccord","Accorde le participe passé : « "+q+" »",[ans],w);
+}
+
+/* ---------- Vocabulaire et grammaire ---------- */
+var ANT=[["grand","petit"],["chaud","froid"],["lent","rapide"],["courageux","peureux"],["heureux","malheureux"],["possible","impossible"],["facile","difficile"],["ouvrir","fermer"],["arriver","partir"],["monter","descendre"],["commencer","finir"],["gagner","perdre"],["riche","pauvre"],["sec","mouillé"],["lourd","léger"],["jour","nuit"],["entrer","sortir"],["fort","faible"],["propre","sale"],["rire","pleurer"],["lisible","illisible"],["sombre","clair"]];
+var SYN=[["joli","beau"],["commencer","débuter"],["gentil","aimable"],["apercevoir","remarquer"],["se dépêcher","se presser"],["fatigué","épuisé"],["énorme","immense"],["bavarder","discuter"],["demeurer","rester"],["effrayé","apeuré"],["triste","malheureux"],["rapide","véloce"]];
+var FAM=[["terre",["terrain","terrasse","enterrer"],"terrible"],["dent",["dentiste","dentaire","dentifrice"],"danse"],["porter",["transporter","portable","apporter"],"portrait"],["fleur",["fleuriste","fleurir","fleuri"],"fleuve"],["mer",["marin","marée","maritime"],"merci"],["lait",["laitier","laitage","allaiter"],"laid"],["chant",["chanter","chanteur","chanson"],"champ"]];
+function gVoc(l){
+  var r=Math.random();
+  if(r<0.4){
+    var d=pick(ANT),flip=Math.random()<0.3,w0=flip?d[1]:d[0],right=flip?d[0]:d[1];
+    var others=shuf(ANT.filter(function(x){return x!==d;})).slice(0,2).map(function(x){return x[1];});
+    var why="« "+w0+" » et « "+right+" » ont des sens opposés : ce sont des contraires."+(/^(im|il|in|mal)/.test(right)?" On forme ce contraire avec un préfixe.":"");
+    return qcm(l,"gram","voc","Quel est le contraire de « "+w0+" » ?",right,others,why);
+  }
+  if(r<0.7){
+    var s=pick(SYN),oth=shuf(SYN.filter(function(x){return x!==s&&x[1]!==s[1];})).slice(0,2).map(function(x){return x[1];});
+    return qcm(l,"gram","voc","Quel mot est un synonyme de « "+s[0]+" » ?",s[1],oth,"« "+s[0]+" » et « "+s[1]+" » ont presque le même sens : ce sont des synonymes.");
+  }
+  var f=pick(FAM),ex=pickN(f[1],2);
+  return qcm(l,"gram","fam","Quel mot n’est pas de la famille de « "+f[0]+" » ?",f[2],ex,"« "+f[2]+" » ressemble à « "+f[0]+" » mais n’en fait pas partie. Les autres mots ("+f[1].join(", ")+") contiennent le radical « "+f[0]+" ».");
+}
+var COD_S=[["Léo","mange","une pomme"],["Nina","regarde","un film"],["Papa","répare","la voiture"],["Les enfants","construisent","un château"],["Maman","prépare","le dîner"],["Mon frère","écoute","de la musique"],["Les élèves","lisent","un conte"],["La voisine","arrose","les fleurs"]];
+var COI_S=[["Il","parle","à sa sœur"],["Léa","téléphone","à son ami"],["Tom","écrit","à sa grand-mère"],["Les enfants","obéissent","à la maîtresse"]];
+function gFonc(l){
+  var r=Math.random();
+  if(r<0.4){var d=pick(COD_S);return qcm(l,"gram","fonc","Dans « "+d[0]+" "+d[1]+" "+d[2]+". », quel est le sujet ?",d[0],[d[1],d[2]],"On demande « qui est-ce qui "+d[1]+" ? » → "+d[0]+".");}
+  if(r<0.8){var e=pick(COD_S);return qcm(l,"gram","fonc","Dans « "+e[0]+" "+e[1]+" "+e[2]+". », quel groupe est le COD ?",e[2],[e[0],e[1]],"On demande « "+e[0]+" "+e[1]+" quoi ? » → "+e[2]+". Il n’y a pas de préposition : c’est un COD.");}
+  var c=pick(COI_S),pron=c[0];
+  return qcm(l,"gram","fonc","Dans « "+c[0]+" "+c[1]+" "+c[2]+". », quel groupe est le COI ?",c[2],[c[0],c[1]],"Le complément est introduit par « à » et répond à « à qui ? » : c’est un COI.");
+}
+
+/* ---------- Textes à trous composés ---------- */
+function B(o,w,r){return {o:o,a:0,w:w,r:r};}
+var D="Description du décor : imparfait.";
+var SETS=[
+{x:"Ce matin-là, il {1} (faire) beau et le ciel {2} (être) bleu.",b:[B(["faisait","a fait","fait"],"On décrit le temps qu’il fait : décor, donc imparfait."),B(["était","a été","est"],D)]},
+{x:"Un après-midi, il {1} (faire) doux et le ciel {2} (être) clair.",b:[B(["faisait","a fait","fait"],D),B(["était","a été","est"],D)]},
+{x:"Ce jour-là, le ciel {1} (être) couvert et il {2} (faire) frais.",b:[B(["était","a été","est"],D),B(["faisait","a fait","fait"],D)]}
+];
+var ACTS=[
+{title:"Une promenade",x:"Léa {1} (se promener) dans le parc quand, tout à coup, elle {2} (entendre) un grand bruit. Elle {3} (s’arrêter) et {4} (se retourner).",b:[
+ B(["se promenait","s’est promenée","se promène"],"Action en cours quand un événement la coupe : imparfait.","inter"),
+ B(["a entendu","entendait","avait entendu"],"« Tout à coup » annonce un événement soudain qui interrompt l’action : passé composé.","inter"),
+ B(["s’est arrêtée","s’arrêtait","s’est arrêté"],"Action précise : passé composé avec être, accordé avec Léa (féminin) : s’est arrêtée.","ppAccord"),
+ B(["s’est retournée","se retournait","s’est retourné"],"Autre action précise : passé composé avec être, accordé avec Léa : s’est retournée.","ppAccord")]},
+{title:"Le téléphone",x:"Tom {1} (lire) tranquillement dans sa chambre quand le téléphone {2} (sonner). Il {3} (poser) son livre et {4} (courir) répondre.",b:[
+ B(["lisait","a lu","lit"],"Action en cours quand un événement la coupe : imparfait.","inter"),
+ B(["a sonné","sonnait","avait sonné"],"Événement soudain qui interrompt l’action : passé composé.","inter"),
+ B(["a posé","posait","avait posé"],"Action précise qui suit : passé composé."),
+ B(["a couru","courait","est couru"],"Courir se conjugue avec avoir : il a couru.","auxEtre")]},
+{title:"L’odeur de brûlé",x:"Nina {1} (dessiner) pendant que sa mère {2} (préparer) le dîner. Soudain, une odeur de brûlé {3} (envahir) la cuisine et Nina {4} (courir) ouvrir la fenêtre.",b:[
+ B(["dessinait","a dessiné","dessine"],"« Pendant que » : action qui dure en même temps qu’une autre : imparfait.","inter"),
+ B(["préparait","a préparé","prépare"],"Autre action qui dure en même temps : imparfait.","inter"),
+ B(["a envahi","envahissait","avait envahi"],"« Soudain » annonce un événement : passé composé."),
+ B(["a couru","courait","a courue"],"Action précise : passé composé avec avoir, sans accord avec le sujet : a couru.","ppAccord")]},
+{title:"La chute",x:"Hugo {1} (descendre) l’escalier quand il {2} (glisser). Il {3} (tomber) et {4} (se faire) mal au genou.",b:[
+ B(["descendait","est descendu","descend"],"Action en cours quand un événement la coupe : imparfait.","inter"),
+ B(["a glissé","glissait","avait glissé"],"Événement soudain qui interrompt l’action : passé composé.","inter"),
+ B(["est tombé","tombait","a tombé"],"Tomber se conjugue avec être : il est tombé.","auxEtre"),
+ B(["s’est fait","se faisait","s’est faite"],"Action précise : passé composé avec être : il s’est fait mal.","auxEtre")]},
+{title:"L’arrêt de bus",x:"Emma {1} (attendre) le bus depuis dix minutes quand une voiture {2} (s’arrêter) devant elle. Son oncle {3} (ouvrir) la fenêtre et lui {4} (dire) : « Monte ! »",b:[
+ B(["attendait","a attendu","attend"],"« Depuis dix minutes » : action qui dure quand une autre arrive : imparfait.","inter"),
+ B(["s’est arrêtée","s’arrêtait","s’est arrêté"],"Événement précis : passé composé avec être, accordé avec « une voiture » (féminin) : s’est arrêtée.","ppAccord"),
+ B(["a ouvert","ouvrait","avait ouvert"],"Action précise : passé composé."),
+ B(["a dit","disait","avait dit"],"Action précise : passé composé : a dit.","pcForm")]},
+{title:"La récréation",x:"Jules {1} (jouer) au ballon dans la cour quand la cloche {2} (sonner). Les garçons {3} (ranger) leurs affaires et {4} (se mettre) en rang.",b:[
+ B(["jouait","a joué","joue"],"Action en cours quand un événement la coupe : imparfait.","inter"),
+ B(["a sonné","sonnait","avait sonné"],"Événement soudain : passé composé.","inter"),
+ B(["ont rangé","rangeaient","ont rangés"],"Action précise : passé composé avec avoir (pas d’accord avec le sujet)."),
+ B(["se sont mis","se mettaient","se sont mises"],"Verbe pronominal : être, accordé avec « les garçons » (masculin pluriel) : se sont mis.","ppAccord")]},
+{title:"L’orage",x:"Les enfants {1} (dormir) quand l’orage {2} (éclater). Tout le monde {3} (se réveiller) et la petite Lina {4} (aller) voir ses parents.",b:[
+ B(["dormaient","ont dormi","dorment"],"Action en cours quand un événement la coupe : imparfait.","inter"),
+ B(["a éclaté","éclatait","avait éclaté"],"Événement soudain : passé composé.","inter"),
+ B(["s’est réveillé","se réveillait","s’est réveillée"],"« Tout le monde » est masculin singulier : s’est réveillé.","ppAccord"),
+ B(["est allée","allait","a allé"],"Aller se conjugue avec être, accordé avec Lina (féminin) : est allée.","auxEtre")]},
+{title:"Chez grand-père",x:"Chaque été, Tom {1} (aller) chez son grand-père. Un été, il {2} (apprendre) à pêcher et il {3} (attraper) un énorme poisson.",b:[
+ B(["allait","est allé","va"],"« Chaque été » : habitude : imparfait.","impPC"),
+ B(["a appris","apprenait","avait appris"],"« Un été » : événement précis : passé composé.","impPC"),
+ B(["a attrapé","attrapait","avait attrapé"],"Action précise et terminée : passé composé.")]},
+{title:"Un jour de retard",x:"D’habitude, Nina {1} (se lever) à sept heures. Ce jour-là, elle {2} (se réveiller) en retard et {3} (courir) jusqu’à l’école.",b:[
+ B(["se levait","s’est levée","se lève"],"« D’habitude » : habitude : imparfait.","impPC"),
+ B(["s’est réveillée","se réveillait","s’est réveillé"],"« Ce jour-là » : événement précis : passé composé avec être, accordé avec Nina.","ppAccord"),
+ B(["a couru","courait","est couru"],"Action précise : passé composé : courir se conjugue avec avoir.","auxEtre")]},
+{title:"Le renard",x:"Hugo {1} (marcher) dans la forêt quand il {2} (apercevoir) un renard. Le renard le {3} (regarder) un instant, puis il {4} (s’enfuir).",b:[
+ B(["marchait","a marché","marche"],"Action en cours quand un événement la coupe : imparfait.","inter"),
+ B(["a aperçu","apercevait","avait aperçu"],"Événement soudain : passé composé.","inter"),
+ B(["a regardé","regardait","avait regardé"],"« Un instant » : action très brève : passé composé."),
+ B(["s’est enfui","s’enfuyait","s’est enfuie"],"« Puis » annonce l’action suivante : passé composé avec être ; le renard est masculin : s’est enfui.","ppAccord")]}
+];
+var PQPS=[
+{x:"Quand nous {1} (arriver) à la gare, le train {2} (déjà partir).",b:[B(["sommes arrivés","arrivions","étions arrivés"],"Événement précis : passé composé avec être.","auxEtre"),B(["était déjà parti","est déjà parti","partait déjà"],"Le train est parti avant notre arrivée : plus-que-parfait. « Déjà » aide.","pqp")]},
+{x:"Quand la maîtresse {1} (entrer), les élèves {2} (déjà ranger) leurs affaires.",b:[B(["est entrée","entrait","était entrée"],"Événement précis : passé composé avec être, accordé avec la maîtresse.","auxEtre"),B(["avaient déjà rangé","ont déjà rangé","rangeaient déjà"],"Les élèves ont rangé avant l’entrée de la maîtresse : plus-que-parfait.","pqp")]},
+{x:"Quand Léo {1} (arriver) à la fête, ses amis {2} (déjà manger) le gâteau.",b:[B(["est arrivé","arrivait","était arrivé"],"Événement précis : passé composé avec être.","auxEtre"),B(["avaient déjà mangé","ont déjà mangé","mangeaient déjà"],"Le gâteau était mangé avant son arrivée : plus-que-parfait.","pqp")]},
+{x:"Hier, Tom {1} (retrouver) le stylo qu’il {2} (perdre) la semaine dernière.",b:[B(["a retrouvé","retrouvait","avait retrouvé"],"« Hier » : événement précis : passé composé."),B(["avait perdu","a perdu","perdait"],"La perte (« la semaine dernière ») est avant « hier » : plus-que-parfait.","pqp")]},
+{x:"Elle {1} (ouvrir) la porte : un colis {2} (déjà arriver) devant.",b:[B(["a ouvert","ouvrait","avait ouvert"],"Action précise : passé composé."),B(["était déjà arrivé","est déjà arrivé","arrivait déjà"],"Le colis est arrivé avant qu’elle ouvre : plus-que-parfait. Arriver : être.","pqp")]},
+{x:"Quand le facteur {1} (sonner), nous {2} (déjà partir).",b:[B(["a sonné","sonnait","avait sonné"],"Événement précis : passé composé."),B(["étions déjà partis","sommes déjà partis","partions déjà"],"Nous sommes partis avant la sonnerie : plus-que-parfait.","pqp")]}
+];
+function compose(mods,title){
+  var off=0,x=[],b=[];
+  mods.forEach(function(m){
+    x.push(m.x.replace(/\{(\d+)\}/g,function(_,n){return "{"+(off+ +n)+"}";}));
+    m.b.forEach(function(bl){b.push({o:bl.o.slice(),a:0,w:bl.w,r:bl.r});});
+    off+=m.b.length;
+  });
+  return {title:title,x:x.join("\n\n"),b:b};
+}
+function gPass(l){
+  var act=pick(ACTS),mods;
+  if(l>=4){
+    var set=pick(SETS),pq=pick(PQPS);
+    mods=[set,act,pq];
+  } else mods=[pick(SETS),act];
+  var c=compose(mods,act.title);
+  var q=mk(l,"passe",l>=4?"pqp":"impPC","pass",{title:c.title,x:c.x,b:c.b});
+  return q;
+}
+function gPassTyped(l){
+  /* version à écrire : on convertit un récit composé en texte à conjuguer */
+  var q=gPass(l);
+  var inf=[];
+  q.x=q.x.replace(/\{(\d+)\} \(([^)]*)\)/g,function(m,n,v){inf.push(v);return "{"+n+"}";});
+  q.b=q.b.map(function(bl){return {a:[bl.o[0]],w:bl.w,r:bl.r};});
+  q.x+="\n\n(Conjugue : "+inf.join(", ")+".)";
+  return q;
+}
+
+/* ---------- Programme par niveau ---------- */
+var PLAN={
+ 1:[[gImp,3],[gPC,3],[gFut,2],[gIdent,2],[gAux,2],[gHom,3],[gVoc,2],[gPlur,1],[gFonc,1],[gCue,2]],
+ 2:[[gImp,2],[gPC,2],[gPron,2],[gCue,2],[gInter,3],[gHab,2],[gPPe,2],[gHom,3],[gFem,1],[gSV,1],[gVoc,2],[gFonc,1],[gFut,1]],
+ 3:[[gInter,2],[gHab,2],[gPron,1],[gPPe,1],[gCOD,2],[gSV,2],[gHom,2],[gCue,1],[gCond,1],[gFonc,1],[gVoc,1],[gPass,3],[gPassTyped,1]],
+ 4:[[gPQP,3],[gCond,2],[gCOD,2],[gIdent,2],[gFut,1],[gInter,1],[gPPe,1],[gSV,1],[gHom,1],[gFonc,1],[gPass,3],[gPassTyped,1]]
+};
+var THEME_OF=new Map();
+function themeOf(fn){
+  if(!THEME_OF.has(fn)){var t=fn(1);THEME_OF.set(fn,t.t);}
+  return THEME_OF.get(fn);
+}
+function qkey(q){return q.k==="pass"?q.x:q.q;}
+function make(level,theme){
+  var plan=PLAN[level].filter(function(p){return theme==="all"||themeOf(p[0])===theme;});
+  if(!plan.length)plan=PLAN[level];
+  var tot=plan.reduce(function(s,p){return s+p[1];},0),r=Math.random()*tot,f=plan[0][0];
+  for(var i=0;i<plan.length;i++){r-=plan[i][1];if(r<=0){f=plan[i][0];break;}}
+  return f(level);
+}
+function set(level,theme,n,skip){
+  var out=[],seen={};
+  (skip||[]).forEach(function(k){seen[k]=1;});
+  var tries=0,passes=0;
+  while(out.length<n&&tries<n*30){
+    tries++;
+    var q=make(level,theme);
+    if(q.k==="pass"){if(passes>=Math.max(1,Math.round(n/8)))continue;}
+    var k=qkey(q);
+    if(seen[k])continue;
+    seen[k]=1;if(q.k==="pass")passes++;
+    out.push(q);
+  }
+  return out;
+}
+function exam(level){
+  if(level==="mix"){
+    var o=[].concat(set(1,"all",5),set(2,"all",8),set(3,"all",5),set(4,"all",7));
+    return o;
+  }
+  var nS={1:24,2:22,3:15,4:13}[level];
+  var o2=set(level,"all",nS);
+  var pas=o2.filter(function(q){return q.k==="pass";}).length;
+  while(level>=3&&pas<2){var pq=gPass(level);if(!o2.some(function(q){return qkey(q)===qkey(pq);})){o2.push(pq);pas++;}}
+  return o2;
+}
+return {make:make,set:set,exam:exam};
+})();
+
+(function(){
+"use strict";
+var $=function(s,r){return (r||document).querySelector(s);};
+var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});};
+var norm=function(s){return String(s==null?"":s).toLowerCase().replace(/[’‘`´]/g,"'").replace(/\s+/g," ").trim();};
+var plain=function(s){return norm(s).normalize("NFD").replace(/[̀-ͯ]/g,"");};
+var shuffle=function(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;};
+var stars=function(n){return "★".repeat(n)+"☆".repeat(3-n);};
+var fmt=function(ms){var s=Math.max(0,Math.round(ms/1000));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");};
+var EXAM_MS=30*60*1000;
+var SERIES=12;
+var DEFAULT_MODEL="claude-sonnet-5-5";
+
+var LEVELS={
+ 1:{n:"Échauffement",d:"Reconnaître le temps d’un verbe, former l’imparfait et le passé composé, orthographe de base."},
+ 2:{n:"Je choisis le bon temps",d:"Imparfait ou passé composé dans une phrase, actions qui s’interrompent, accord du participe passé."},
+ 3:{n:"Je raconte",d:"Textes à trous : plusieurs événements, décor et actions mélangés dans un même récit."},
+ 4:{n:"Défi expert",d:"Plus-que-parfait, accords difficiles, conditionnel. Pour aller plus loin."}
+};
+var SRC={bank:"Banque de questions",gen:"Nouveaux exercices",claude:"Questions de Claude"};
+
+/* ---------- Mémoire (sur la tablette) ---------- */
+var KEY="atelier-francais-v2";
+var mem={best:{},errors:[],hist:[],seen:[],extra:[],set:{src:"bank",key:"",model:DEFAULT_MODEL}};
+var storageOK=true;
+try{
+  var raw=localStorage.getItem(KEY);
+  if(raw){var o=JSON.parse(raw);["best","errors","hist","seen","extra"].forEach(function(k){if(o[k])mem[k]=o[k];});if(o.set)Object.keys(o.set).forEach(function(k){mem.set[k]=o.set[k];});}
+}catch(e){storageOK=false;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(mem));}catch(e){storageOK=false;}}
+function qkey(q){return q.k==="pass"?q.x:q.q;}
+function eKey(q){return typeof q.id==="number"?"s"+q.id:"k"+qkey(q);}
+function addErr(q){var k=eKey(q);if(mem.errors.some(function(e){return e.k===k;}))return;mem.errors.push(typeof q.id==="number"?{k:k,id:q.id}:{k:k,q:q});if(mem.errors.length>80)mem.errors.shift();save();}
+function delErr(q){var k=eKey(q),i=mem.errors.findIndex(function(e){return e.k===k;});if(i>=0){mem.errors.splice(i,1);save();}}
+function errQs(){return mem.errors.map(function(e){return e.id!==undefined?BANK[e.id]:e.q;}).filter(Boolean);}
+function markSeen(q){if(typeof q.id==="number"&&mem.seen.indexOf(q.id)<0)mem.seen.push(q.id);}
+function isSeen(q){return typeof q.id==="number"&&mem.seen.indexOf(q.id)>=0;}
+function src(){return mem.set.src;}
+
+/* ---------- Correction ---------- */
+function hasAns(q,a){
+  if(q.k==="qcm")return typeof a==="number";
+  if(q.k==="fill")return norm(a)!=="";
+  return q.b.every(function(b,i){return a&&a[i]!==undefined&&a[i]!==null&&a[i]!=="";});
+}
+function hasAnyAns(q,a){
+  if(q.k==="qcm")return typeof a==="number";
+  if(q.k==="fill")return norm(a)!=="";
+  return !!a&&a.some(function(v){return v!==undefined&&v!==null&&v!=="";});
+}
+function grade(q,a){
+  if(q.k==="qcm"){var ok=a===q.a;return {pts:ok?1:0,max:1,parts:[ok]};}
+  if(q.k==="fill"){
+    var ok2=q.a.some(function(x){return norm(x)===norm(a);});
+    var acc=!ok2&&norm(a)!==""&&q.a.some(function(x){return plain(x)===plain(a);});
+    return {pts:ok2?1:0,max:1,parts:[ok2],accent:acc};
+  }
+  var parts=q.b.map(function(b,i){
+    var v=a?a[i]:undefined;
+    if(v===undefined||v===null||v==="")return false;
+    return b.o?v===b.a:b.a.some(function(x){return norm(x)===norm(v);});
+  });
+  return {pts:parts.filter(Boolean).length,max:q.b.length,parts:parts};
+}
+function maxPts(q){return q.k==="pass"?q.b.length:1;}
+function ansText(q,a,i){
+  if(q.k==="qcm")return typeof a==="number"?q.o[a]:"";
+  if(q.k==="fill")return a||"";
+  var b=q.b[i],v=a?a[i]:undefined;
+  if(v===undefined||v===null||v==="")return "";
+  return b.o?b.o[v]:v;
+}
+function rightText(q,i){
+  if(q.k==="qcm")return q.o[q.a];
+  if(q.k==="fill")return q.a.join(" ou ");
+  var b=q.b[i];return b.o?b.o[b.a]:b.a.join(" ou ");
+}
+function prompt(q){
+  if(q.k==="pass")return q.b[0].o?"Pour chaque trou, choisis le bon temps.":"Conjugue chaque verbe au temps qui convient.";
+  return q.q;
+}
+function nl(s){return s.replace(/\n\n/g,"<br><br>");}
+
+/* ---------- État ---------- */
+var S={view:"home"};
+var THEME="all";
+var PF={};
+var timerId=null;
+function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
+function cur(){return S.qs[S.i];}
+function ord(key,n){if(!S.orders[key]){S.orders[key]=shuffle(Array.apply(null,Array(n)).map(function(_,i){return i;}));}return S.orders[key];}
+function srcPool(level,theme){
+  var base=src()==="claude"?mem.extra:BANK;
+  return base.filter(function(q){return q.l===level&&(theme==="all"||q.t===theme);});
+}
+function levelPoints(l){return BANK.filter(function(q){return q.l===l;}).reduce(function(s,q){return s+maxPts(q);},0);}
+function levelCount(l){
+  if(src()==="gen")return "illimités";
+  if(src()==="claude")return mem.extra.filter(function(q){return q.l===l;}).length+" questions";
+  return BANK.filter(function(q){return q.l===l;}).length+" questions · "+levelPoints(l)+" points";
+}
+function bestKey(level){return src()+":"+level;}
+
+function startTrain(level){
+  var qs;
+  if(src()==="gen")qs=GEN.set(level,THEME,SERIES);
+  else{qs=shuffle(srcPool(level,THEME));qs.sort(function(a,b){return (isSeen(a)?1:0)-(isSeen(b)?1:0);});qs=qs.slice(0,SERIES);}
+  if(!qs.length)return;
+  stopTimer();
+  S={view:"play",mode:"train",level:level,src:src(),qs:qs,i:0,ans:{},orders:{},checked:false,g:null,log:[],msg:""};
+  render(true);
+}
+function startErrors(){
+  var qs=shuffle(errQs()).slice(0,SERIES);
+  if(!qs.length)return;
+  stopTimer();
+  S={view:"play",mode:"train",level:0,src:"err",qs:qs,i:0,ans:{},orders:{},checked:false,g:null,log:[],msg:""};
+  render(true);
+}
+function sortExam(arr){
+  var t=function(q){return THEME_ORDER.indexOf(q.t);};
+  return shuffle(arr).sort(function(a,b){return (a.k==="pass"?1:0)-(b.k==="pass"?1:0)||t(a)-t(b);});
+}
+function examSet(level){
+  var s=src();
+  if(s==="gen")return GEN.exam(level);
+  if(s==="claude"){
+    var pool=level==="mix"?mem.extra:mem.extra.filter(function(q){return q.l===level;});
+    return sortExam(pool.slice()).slice(0,26);
+  }
+  if(level==="mix"){
+    var take=function(l,n){return shuffle(BANK.filter(function(q){return q.l===l;})).slice(0,n);};
+    return [].concat(take(1,5),take(2,8),take(3,4),take(4,6)).sort(function(a,b){return a.l-b.l;});
+  }
+  return sortExam(BANK.filter(function(q){return q.l===level;}));
+}
+function examOK(level){
+  if(src()!=="claude")return true;
+  var n=level==="mix"?mem.extra.length:mem.extra.filter(function(q){return q.l===level;}).length;
+  return n>=8;
+}
+function startExam(level){
+  if(!examOK(level))return;
+  var qs=examSet(level);
+  stopTimer();
+  S={view:"play",mode:"exam",level:level,src:src(),qs:qs,i:0,ans:{},orders:{},deadline:Date.now()+EXAM_MS,confirm:false,leave:false,start:Date.now(),msg:""};
+  timerId=setInterval(tick,500);
+  render(true);
+}
+function tick(){
+  if(!S||S.mode!=="exam"||S.view!=="play"){stopTimer();return;}
+  var rem=S.deadline-Date.now();
+  var t=$("#timer");
+  if(t){t.textContent=fmt(rem);t.classList.toggle("low",rem<5*60*1000);}
+  if(rem<=0)finishExam(true);
+}
+function levelLabel(){return S.level==="mix"?"Épreuve finale":(S.level?"Niveau "+S.level:"Mes erreurs");}
+
+/* ---------- Gabarits ---------- */
+function ruleCard(id){
+  var r=RULES[id];if(!r)return "";
+  return '<aside class="rule"><div><span class="tag">La règle</span><h4>'+esc(r.t)+'</h4></div><p>'+r.x+'</p><ul>'+r.e.map(function(e){return "<li>"+esc(e)+"</li>";}).join("")+"</ul></aside>";
+}
+function ruleDetails(id,open){
+  var r=RULES[id];if(!r)return "";
+  return '<details class="rd"'+(open?" open":"")+"><summary>"+(open?"La règle : ":"Revoir la règle : ")+esc(r.t)+"</summary>"+ruleCard(id)+"</details>";
+}
+function ruleIds(q,g){
+  var ids=[];
+  if(q.k==="pass"){q.b.forEach(function(b,i){if(!g.parts[i]){var r=b.r||q.r;if(ids.indexOf(r)<0)ids.push(r);}});}
+  else ids.push(q.r);
+  return ids;
+}
+function filled(q,a,g){
+  return nl(esc(q.x)).replace(/\{(\d+)\}/g,function(m,n){
+    var i=n-1,right=rightText(q,i),mine=ansText(q,a,i);
+    if(g.parts[i])return '<span class="fill ok">'+esc(right)+"</span>";
+    return '<span class="fill ko">'+(mine?"<s>"+esc(mine)+"</s> ":"<s>…</s> ")+"<b>"+esc(right)+"</b></span>";
+  });
+}
+function explain(q,a,g){
+  var ok=g.pts===g.max,h="";
+  if(q.k==="pass"){
+    h+='<p class="filled">'+filled(q,a,g)+"</p>";
+    var bad=[];
+    q.b.forEach(function(b,i){if(!g.parts[i])bad.push("<li><b>Trou "+(i+1)+".</b> "+esc(b.w||"")+"</li>");});
+    if(bad.length)h+='<ul class="why">'+bad.join("")+"</ul>";
+  } else {
+    if(!ok)h+='<p class="mine">Ta réponse : <span class="x">'+esc(ansText(q,a,0)||"pas de réponse")+"</span></p>";
+    h+='<p class="right">Bonne réponse : <b>'+esc(rightText(q,0))+"</b></p>";
+    if(g.accent)h+='<p class="why">Presque ! Il y a une faute d’accent ou de lettre dans ta réponse.</p>';
+    h+='<p class="why">'+esc(q.w||"")+"</p>";
+  }
+  return h;
+}
+function controls(q,a,locked,g){
+  var h="";
+  if(q.k==="qcm"){
+    var o=ord(q.id,q.o.length);
+    h+='<div class="opts" role="group" aria-label="Réponses possibles">'+o.map(function(i){
+      var cls="opt";
+      if(locked){if(i===q.a)cls+=" good";else if(a===i)cls+=" bad";}
+      else if(a===i)cls+=" sel";
+      return '<button type="button" class="'+cls+'" data-act="pick" data-i="'+i+'"'+(locked?" disabled":"")+' aria-pressed="'+(a===i)+'">'+esc(q.o[i])+"</button>";
+    }).join("")+"</div>";
+  } else if(q.k==="fill"){
+    var st=locked?(g.parts[0]?" ok":" ko"):"";
+    h+='<div class="field"><label for="ans">Ta réponse</label><input id="ans" class="'+st.trim()+'" type="text" value="'+esc(a||"")+'" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" lang="fr"'+(locked?" disabled":"")+"></div>";
+  } else {
+    h+='<h3 class="ptitle">'+esc(q.title||"Récit")+'</h3><p class="passage">'+nl(esc(q.x)).replace(/\{(\d+)\}/g,function(m,n){
+      var i=n-1,b=q.b[i],v=a?a[i]:undefined,st2=locked?(g.parts[i]?" ok":" ko"):"";
+      if(b.o){
+        var oo=ord(q.id+"-"+i,b.o.length);
+        return '<select class="blank'+st2+'" data-b="'+i+'" aria-label="Trou '+n+'"'+(locked?" disabled":"")+'><option value="">…</option>'+oo.map(function(k){return '<option value="'+k+'"'+(v===k?" selected":"")+">"+esc(b.o[k])+"</option>";}).join("")+"</select>";
+      }
+      return '<input class="blank'+st2+'" type="text" data-b="'+i+'" aria-label="Trou '+n+'" value="'+esc(v||"")+'" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" lang="fr"'+(locked?" disabled":"")+">";
+    })+"</p>";
+  }
+  return h;
+}
+
+/* ---------- Vues ---------- */
+function bestLine(l){
+  var b=mem.best[bestKey(l)];
+  if(!b)return '<span class="meta">Pas encore d’épreuve passée avec cette source.</span>';
+  return '<span class="best">Meilleure épreuve : '+b.pts+" / "+b.max+' <span class="st" aria-label="'+b.stars+' étoiles sur 3">'+stars(b.stars)+"</span></span>";
+}
+function viewHome(){
+  var chips=[["all","Tous les thèmes"]].concat(THEME_ORDER.map(function(t){return [t,THEMES[t]];}));
+  var s=src(),connected=!!mem.set.key;
+  var h='<header class="hero"><h1>Mon Atelier <span>de Français</span></h1><p>Entraîne-toi sur les temps du passé et le reste du programme. Tu réponds directement, et si tu te trompes, tu vois pourquoi, avec la règle et des exemples.</p></header>';
+  if(!storageOK)h+='<p class="notice warnbox"><b>Attention :</b> cette page ne peut pas enregistrer ta progression sur cet appareil. Un parent peut utiliser la sauvegarde dans l’Espace parent.</p>';
+  h+='<div class="sect-h"><h2>D’où viennent les exercices ?</h2></div>';
+  h+='<div class="seg" role="group" aria-label="Source des exercices">'+
+   [["bank","Banque de questions",BANK.length+" questions rédigées, avec textes à trous"],["gen","Nouveaux exercices","Fabriqués à chaque fois, sans fin, sans internet"],["claude","Questions de Claude",mem.extra.length?mem.extra.length+" questions reçues":"Il faut d’abord les générer (espace parent)"]].map(function(c){
+     return '<button type="button" data-act="src" data-s="'+c[0]+'" aria-pressed="'+(s===c[0])+'"><b>'+c[1]+"</b><span>"+c[2]+"</span></button>";
+   }).join("")+"</div>";
+  h+='<div class="sect-h"><h2>Choisis ton niveau</h2></div>';
+  h+='<div class="chips" role="group" aria-label="Thème de l’entraînement"><span class="meta" style="align-self:center;font-weight:800">Thème pour s’entraîner :</span>'+chips.map(function(c){return '<button type="button" class="chip" data-act="theme" data-t="'+c[0]+'" aria-pressed="'+(THEME===c[0])+'">'+esc(c[1])+"</button>";}).join("")+"</div>";
+  h+='<div class="levels">';
+  for(var l=1;l<=4;l++){
+    var np=s==="gen"?1:srcPool(l,THEME).length;
+    h+='<section class="lv"><div class="lv-top"><span class="n">Niveau '+l+'</span><span class="dots" aria-label="Difficulté '+l+' sur 4">'+[1,2,3,4].map(function(d){return '<i class="'+(d<=l?"on":"")+'"></i>';}).join("")+"</span></div><h3>"+esc(LEVELS[l].n)+"</h3><p>"+esc(LEVELS[l].d)+'</p><span class="meta">'+levelCount(l)+"</span>"+bestLine(l)+'<div class="lv-act"><button type="button" class="btn" data-act="train" data-l="'+l+'"'+(np?"":" disabled")+'>S’entraîner</button><button type="button" class="btn primary" data-act="exam" data-l="'+l+'"'+(examOK(l)?"":" disabled")+'>Épreuve 30 min</button></div></section>';
+  }
+  h+="</div>";
+  h+='<div class="extras"><div class="ex"><h3>Épreuve finale</h3><p>Environ 30 questions de tous les niveaux, en 30 minutes.</p><button type="button" class="btn primary" data-act="exam" data-l="mix"'+(examOK("mix")?"":" disabled")+">Lancer l’épreuve finale</button></div>";
+  h+='<div class="ex"><h3>Mes erreurs ('+mem.errors.length+')</h3><p>Reprends les questions ratées jusqu’à les réussir.</p><button type="button" class="btn" data-act="errors"'+(mem.errors.length?"":" disabled")+">Revoir mes erreurs</button></div>";
+  h+='<div class="ex"><h3>Fiches de règles</h3><p>Toutes les règles avec des exemples.</p><button type="button" class="btn" data-act="rules">Ouvrir les fiches</button></div>';
+  h+='<div class="ex"><h3>Claude '+(connected?'<span class="pill on">connecté</span>':'<span class="pill">non connecté</span>')+'</h3><p>Espace parent : connexion à Claude, nouveaux exercices sur mesure, sauvegarde.</p><button type="button" class="btn" data-act="parent">Espace parent</button></div></div>';
+  return h;
+}
+function viewPlay(){
+  var q=cur(),a=S.ans[q.id],isExam=S.mode==="exam";
+  var h='<div class="bar"><button type="button" class="link" data-act="leave">← Accueil</button><span class="mid">'+levelLabel()+" · "+(isExam?"Épreuve":"Entraînement")+"</span>";
+  h+=isExam?'<span class="timer" id="timer" role="timer">'+fmt(S.deadline-Date.now())+"</span>":'<span class="count">'+(S.i+1)+" / "+S.qs.length+"</span>";
+  h+="</div>";
+  if(S.leave)h+='<div class="notice" role="alertdialog" aria-label="Quitter"><p><b>Quitter maintenant ?</b> '+(isExam?"L’épreuve sera abandonnée.":"Ta série en cours sera perdue.")+'</p><div class="actions"><button type="button" class="btn primary" data-act="leave-yes">Oui, quitter</button><button type="button" class="btn" data-act="leave-no">Continuer</button></div></div>';
+  if(isExam){
+    h+='<div class="grid" role="group" aria-label="Aller à une question">'+S.qs.map(function(x,i){
+      var d=hasAnyAns(x,S.ans[x.id]);
+      return '<button type="button" data-act="goto" data-n="'+i+'" class="'+(d?"done ":"")+(i===S.i?"cur":"")+'" aria-label="Question '+(i+1)+(d?", répondue":"")+'">'+(i+1)+"</button>";
+    }).join("")+"</div>";
+  } else {
+    h+='<div class="prog" aria-hidden="true"><span style="width:'+Math.round((S.i+(S.checked?1:0))/S.qs.length*100)+'%"></span></div>';
+  }
+  var locked=!isExam&&S.checked;
+  h+='<article class="qcard"><span class="tag">'+esc(THEMES[q.t]||"")+(q.claude?" · question de Claude":"")+(isExam?" · question "+(S.i+1)+" sur "+S.qs.length:"")+'</span><p class="q">'+esc(prompt(q))+"</p>"+controls(q,a,locked,S.g)+"</article>";
+  if(!isExam){
+    if(S.checked){
+      var g=S.g,ok=g.pts===g.max;
+      h+='<section class="fb '+(ok?"good":"bad")+'" id="fb" tabindex="-1" aria-live="polite"><h3>'+(q.k==="pass"?(ok?"Bravo, tout est juste !":"Tu as "+g.pts+" trou"+(g.pts>1?"s":"")+" juste"+(g.pts>1?"s":"")+" sur "+g.max):(ok?"Bravo !":"À corriger"))+"</h3>"+explain(q,a,g)+"</section>";
+      if(!ok)h+=ruleIds(q,g).map(function(id){return ruleCard(id);}).join("");
+      else h+=ruleDetails(q.r,false);
+    }
+    if(S.msg)h+='<p class="msg" role="alert">'+esc(S.msg)+"</p>";
+    h+='<div class="actions">';
+    h+=S.checked?'<button type="button" class="btn primary" data-act="next">'+(S.i+1>=S.qs.length?"Voir mon résultat":"Question suivante")+"</button>":'<button type="button" class="btn primary" data-act="check">Valider</button>';
+    h+="</div>";
+  } else {
+    if(S.msg)h+='<p class="msg">'+esc(S.msg)+"</p>";
+    h+='<div class="actions"><button type="button" class="btn" data-act="prev"'+(S.i===0?" disabled":"")+'>← Précédente</button>';
+    h+='<button type="button" class="btn" data-act="next"'+(S.i+1>=S.qs.length?" disabled":"")+">Suivante →</button><span class=\"sp\"></span>";
+    h+='<button type="button" class="btn primary" data-act="finish">Terminer l’épreuve</button></div>';
+    if(S.confirm){
+      var left=S.qs.filter(function(x){return !hasAnyAns(x,S.ans[x.id]);}).length;
+      h+='<div class="notice" role="alertdialog" aria-label="Terminer"><p><b>Terminer l’épreuve ?</b> '+(left?"Il reste "+left+" question"+(left>1?"s":"")+" sans réponse.":"Toutes les questions ont une réponse.")+'</p><div class="actions"><button type="button" class="btn primary" data-act="finish-yes">Oui, terminer</button><button type="button" class="btn" data-act="finish-no">Continuer</button></div></div>';
+    }
+  }
+  return h;
+}
+function viewResults(){
+  var R=S.res,pct=R.max?Math.round(R.pts/R.max*100):0;
+  var h='<div class="bar"><button type="button" class="link" data-act="home">← Accueil</button><span class="mid">'+levelLabel()+"</span></div>";
+  h+='<header class="hero"><h1>'+(R.mode==="exam"?(R.timeout?"Temps écoulé !":"Épreuve terminée"):"Série terminée")+'</h1></header>';
+  h+='<div class="score"><span class="big">'+R.pts+"<small> / "+R.max+'</small></span><span class="st" aria-label="'+R.stars+' étoiles sur 3">'+stars(R.stars)+'</span><span class="count">'+pct+" %"+(R.mode==="exam"?" · "+fmt(R.used)+" utilisées":"")+"</span></div>";
+  var msg=pct>=90?"Excellent travail !":pct>=75?"Très bien, continue comme ça.":pct>=60?"C’est bien, quelques points à revoir.":"Pas de panique : relis les règles ci-dessous et recommence.";
+  h+='<p class="q">'+msg+"</p>";
+  var rows=THEME_ORDER.filter(function(t){return R.th[t];}).map(function(t){
+    var x=R.th[t],p=Math.round(x.p/x.m*100);
+    return '<div class="bar-row"><span>'+esc(THEMES[t])+'</span><span class="m"><span style="width:'+p+'%"></span></span><span class="v">'+x.p+" / "+x.m+"</span></div>";
+  }).join("");
+  h+='<section class="bars" aria-label="Résultats par thème"><h2 style="font-size:20px">Par thème</h2>'+rows+"</section>";
+  var worst=null;THEME_ORDER.forEach(function(t){var x=R.th[t];if(x&&x.p<x.m&&(!worst||x.p/x.m<R.th[worst].p/R.th[worst].m))worst=t;});
+  if(worst)h+='<p class="empty">À revoir en priorité : <b>'+esc(THEMES[worst])+"</b>.</p>";
+  h+='<div class="actions">';
+  if(R.mode==="exam"&&typeof S.level==="number"&&S.level<4&&pct>=80&&examOK(S.level+1))h+='<button type="button" class="btn primary" data-act="exam" data-l="'+(S.level+1)+'">Tenter le niveau '+(S.level+1)+"</button>";
+  h+='<button type="button" class="btn'+(R.mode==="exam"?"":" primary")+'" data-act="again">'+(S.src==="gen"?"Nouveaux exercices":"Recommencer")+"</button>";
+  if(mem.errors.length)h+='<button type="button" class="btn" data-act="errors">Revoir mes erreurs ('+mem.errors.length+")</button>";
+  h+='<button type="button" class="btn" data-act="home">Accueil</button></div>';
+  var wrong=R.log.filter(function(x){return x.g.pts<x.g.max;}),good=R.log.filter(function(x){return x.g.pts===x.g.max;});
+  var list=R.showAll?R.log:wrong;
+  h+='<div class="sect-h"><h2>Correction</h2>'+(good.length?'<button type="button" class="link" data-act="showall">'+(R.showAll?"Masquer les réponses justes":"Afficher aussi les réponses justes ("+good.length+")")+"</button>":"")+"</div>";
+  if(!list.length)h+='<p class="empty">Aucune erreur : tout est juste !</p>';
+  h+='<div class="corr">'+list.map(function(x){
+    var ok=x.g.pts===x.g.max;
+    return '<article class="corr-item'+(ok?" okk":"")+'"><span class="tag"><span class="mark '+(ok?"o":"k")+'">'+(ok?"Juste":"À corriger")+"</span> · "+esc(THEMES[x.q.t]||"")+"</span>"+(x.q.k==="pass"?'<h3 class="ptitle">'+esc(x.q.title||"Récit")+"</h3>":'<p class="q">'+esc(prompt(x.q))+"</p>")+explain(x.q,x.a,x.g)+(ok?"":ruleIds(x.q,x.g).map(function(id){return ruleDetails(id,false);}).join(""))+"</article>";
+  }).join("")+"</div>";
+  return h;
+}
+function viewRules(){
+  var h='<div class="bar"><button type="button" class="link" data-act="home">← Accueil</button><span class="mid">Fiches de règles</span></div><header class="hero"><h1>Les <span>règles</span></h1><p>Touche une fiche pour l’ouvrir.</p></header>';
+  THEME_ORDER.forEach(function(t){
+    var ids=Object.keys(RULES).filter(function(id){return RULES[id].c===t;});
+    if(!ids.length)return;
+    h+='<section class="cat"><h2>'+esc(THEMES[t])+"</h2>"+ids.map(function(id){return ruleDetails(id,false).replace("Revoir la règle : ","");}).join("")+"</section>";
+  });
+  return h;
+}
+
+/* ---------- Espace parent : Claude, sauvegarde ---------- */
+function viewParent(){
+  var h='<div class="bar"><button type="button" class="link" data-act="home">← Accueil</button><span class="mid">Espace parent</span></div><header class="hero"><h1>Espace <span>parent</span></h1></header>';
+  if(!PF.ok){
+    h+='<section class="panel"><p>Cet espace est réservé aux parents. Pour entrer, résous ce calcul :</p><div class="row"><label for="gate"><b>'+PF.a+" × "+PF.b+' =</b></label><input id="gate" type="text" inputmode="numeric" autocomplete="off" data-pf="gate" value="'+esc(PF.gate||"")+'"><button type="button" class="btn primary" data-act="gate">Entrer</button></div>'+(PF.err?'<p class="msg">'+esc(PF.err)+"</p>":"")+"</section>";
+    return h;
+  }
+  var key=mem.set.key,online=navigator.onLine!==false;
+  h+='<section class="panel"><h2>1. Connexion à Claude</h2><p class="small">Statut : '+(key?'<span class="pill on">clé enregistrée</span>':'<span class="pill">non connecté</span>')+" "+(online?"":'<span class="pill warn">pas d’internet</span>')+'</p>';
+  h+='<p class="small">L’application fonctionne <b>sans</b> connexion. La connexion sert uniquement à demander à Claude de nouveaux exercices sur mesure. Elle demande une <b>clé API</b> créée sur <b>console.anthropic.com</b> (service payant à l’usage, séparé de l’abonnement Claude.ai). La clé reste sur cette tablette et n’est envoyée qu’à Anthropic.</p>';
+  h+='<div class="form"><label for="ck">Clé API</label><input id="ck" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-…" data-pf="ck" value="'+esc(PF.ck!==undefined?PF.ck:key)+'"><label for="cm">Modèle</label><input id="cm" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-pf="cm" value="'+esc(PF.cm!==undefined?PF.cm:mem.set.model)+'"></div>';
+  h+='<div class="actions"><button type="button" class="btn primary" data-act="key-save">Enregistrer</button><button type="button" class="btn" data-act="key-test"'+(PF.busy?" disabled":"")+'>Tester la connexion</button><button type="button" class="btn" data-act="key-clear">Effacer la clé</button></div>';
+  if(PF.msg)h+='<p class="status" role="status">'+esc(PF.msg)+"</p>";
+  h+="</section>";
+  var weakInfo=weakRules();
+  h+='<section class="panel"><h2>2. Demander de nouveaux exercices à Claude</h2>';
+  if(!key)h+='<p class="small">Enregistre d’abord une clé (étape 1).</p>';
+  h+='<div class="form two"><div><label for="gl">Niveau</label><select id="gl" data-pf="level">'+[1,2,3,4].map(function(l){return '<option value="'+l+'"'+((PF.level||"2")==l?" selected":"")+">Niveau "+l+" · "+esc(LEVELS[l].n)+"</option>";}).join("")+'</select></div><div><label for="gt">Thème</label><select id="gt" data-pf="theme"><option value="all">Tous les thèmes</option>'+THEME_ORDER.map(function(t){return '<option value="'+t+'"'+(PF.theme===t?" selected":"")+">"+esc(THEMES[t])+"</option>";}).join("")+'</select></div><div><label for="gn">Nombre</label><select id="gn" data-pf="n">'+["8","12","20"].map(function(n){return '<option value="'+n+'"'+((PF.n||"12")===n?" selected":"")+">"+n+" questions</option>";}).join("")+"</select></div></div>";
+  h+='<label class="check"><input type="checkbox" id="gw" data-pf="weak"'+(PF.weak!==false&&weakInfo.length?" checked":"")+(weakInfo.length?"":" disabled")+"> Insister sur ses points faibles"+(weakInfo.length?" ("+weakInfo.map(function(r){return esc(RULES[r].t);}).join(" ; ")+")":" (pas encore d’erreurs enregistrées)")+"</label>";
+  h+='<div class="actions"><button type="button" class="btn primary" data-act="gen-run"'+((key&&online&&!PF.busy)?"":" disabled")+">"+(PF.busy?"Claude écrit les exercices…":"Générer avec Claude")+"</button>"+(PF.newCount?'<button type="button" class="btn" data-act="play-claude">Jouer les nouvelles questions</button>':"")+"</div>";
+  if(PF.gmsg)h+='<p class="status" role="status">'+esc(PF.gmsg)+"</p>";
+  h+='<p class="small">Questions de Claude déjà enregistrées : <b>'+mem.extra.length+"</b>. Elles restent disponibles hors ligne (source « Questions de Claude »). "+(mem.extra.length?'<button type="button" class="link" data-act="extra-clear">Les effacer</button>':"")+"</p></section>";
+  h+='<section class="panel"><h2>3. Sauvegarde de la progression</h2><p class="small">Les scores et les erreurs sont enregistrés dans le navigateur de cette tablette. Pour les copier sur un autre appareil ou les protéger, exporte-les puis colle le texte sur l’autre appareil. La clé API n’est jamais incluse.</p><div class="actions"><button type="button" class="btn" data-act="export">Exporter</button><button type="button" class="btn" data-act="import">Importer</button></div>';
+  h+='<textarea id="imp" rows="5" data-pf="imp" placeholder="Le texte exporté apparaît ici. Pour importer, colle-le ici puis touche Importer." spellcheck="false">'+esc(PF.imp||"")+"</textarea>";
+  if(PF.smsg)h+='<p class="status" role="status">'+esc(PF.smsg)+"</p>";
+  h+='<div class="actions">'+(PF.confirmReset?'<span><b>Tout effacer (scores, erreurs, questions de Claude) ?</b></span><button type="button" class="btn primary" data-act="reset-yes">Oui, effacer</button><button type="button" class="btn" data-act="reset-no">Annuler</button>':'<button type="button" class="btn" data-act="reset">Réinitialiser la progression</button>')+"</div></section>";
+  h+='<section class="panel"><h2>4. Installer sur la tablette</h2><p class="small">Si l’application est ouverte depuis un site (https) : dans Chrome, menu ⋮ puis « Installer l’application » (ou « Ajouter à l’écran d’accueil »). Elle s’ouvre ensuite en plein écran et fonctionne sans internet.</p></section>';
+  return h;
+}
+function weakRules(){
+  var c={};
+  errQs().forEach(function(q){var r=q.r;c[r]=(c[r]||0)+1;});
+  return Object.keys(c).filter(function(r){return RULES[r];}).sort(function(a,b){return c[b]-c[a];}).slice(0,3);
+}
+
+/* ---------- Claude (option 3) ---------- */
+var SYSTEM_PROMPT="Tu es un enseignant de français qui crée des exercices pour une élève de 10 ans (école primaire de Suisse romande, degrés 7P-8P, et un peu au-delà). Tu réponds UNIQUEMENT par un tableau JSON valide, sans aucun texte autour et sans balises de code. Chaque exercice a UNE seule bonne réponse, sans ambiguïté : si deux temps verbaux étaient possibles, change la phrase ou ajoute un indice de temps (soudain, chaque jour, la veille, pendant que…). Les phrases parlent de la vie d’un enfant, sont variées et correctes. Les explications (champ w) font 1 à 3 phrases simples adressées à l’enfant et nomment la règle. Utilise l’apostrophe typographique ’ et les guillemets « ». Aucun contenu sensible, aucune marque.";
+function buildPrompt(level,theme,n,weak){
+  var rules=Object.keys(RULES).map(function(id){return id+" = "+RULES[id].t;}).join(" ; ");
+  var p="Crée "+n+" exercices de français de niveau "+level+" sur 4 : "+LEVELS[level].n+" — "+LEVELS[level].d+" L’élève réussit déjà très bien le niveau précédent : sois exigeant, avec des pièges raisonnables.\n";
+  p+="Thème : "+(theme==="all"?"tous les thèmes, avec une majorité d’exercices sur les temps du passé (imparfait, passé composé, plus-que-parfait)":THEMES[theme])+".\n";
+  if(weak.length)p+="Insiste sur ces règles où l’élève se trompe : "+weak.map(function(r){return RULES[r].t;}).join(" ; ")+".\n";
+  p+="Mélange ces trois formats :\n";
+  p+='1) QCM : {"k":"qcm","theme":"passe","rule":"impPC","q":"Complète : « Soudain, la porte ___ (s’ouvrir). »","o":["s’est ouverte","s’ouvrait","s’ouvre"],"w":"explication"} — o[0] est TOUJOURS la bonne réponse, suivie de 1 à 3 mauvaises réponses plausibles.\n';
+  p+='2) Réponse à écrire : {"k":"fill","theme":"conj","rule":"futur","q":"Écris au futur : « Demain, nous (voir) ___ la mer. »","a":["verrons"],"w":"explication"} — a contient la réponse attendue (et les variantes acceptables).\n';
+  if(level>=3)p+='3) Récit à trous (inclus-en au moins 2) : {"k":"pass","theme":"passe","rule":"impPC","title":"Titre court","x":"Ce matin-là, il {1} (faire) beau. Tom {2} (marcher) quand soudain un chien {3} (aboyer).","b":[{"o":["faisait","a fait","fait"],"w":"explication"},{"o":["marchait","a marché","marche"],"w":"explication"},{"o":["a aboyé","aboyait","avait aboyé"],"w":"explication"}]} — 5 à 8 trous numérotés {1}, {2}…, un seul temps correct par trou, o[0] est la bonne réponse. Possibilité d’un trou à écrire : {\"a\":[\"réponse\"],\"w\":\"…\"}.\n';
+  else p+='(Pas de récit à trous pour ce niveau.)\n';
+  p+="Valeurs autorisées pour theme : passe (temps du passé), conj (conjugaison), ortho (orthographe), gram (grammaire et vocabulaire). Valeurs autorisées pour rule : "+rules+".\n";
+  p+="Renvoie le tableau JSON des exercices, rien d’autre.";
+  return p;
+}
+function api(prompt,maxTokens){
+  var key=mem.set.key,model=mem.set.model||DEFAULT_MODEL;
+  return fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:model,max_tokens:maxTokens,system:SYSTEM_PROMPT,messages:[{role:"user",content:prompt}]})}).then(function(r){
+    if(!r.ok)return r.text().then(function(t){var m="";try{m=JSON.parse(t).error.message;}catch(e){}throw new Error(r.status===401?"Clé refusée par Anthropic (vérifie la clé).":r.status===429?"Trop de demandes, réessaie dans une minute.":"Erreur "+r.status+(m?" : "+m:""));});
+    return r.json();
+  }).then(function(j){return (j.content||[]).filter(function(c){return c.type==="text";}).map(function(c){return c.text;}).join("");},function(e){if(e instanceof TypeError)throw new Error("Pas de connexion à internet.");throw e;});
+}
+var DEF_RULE={passe:"impPC",conj:"futur",ortho:"gn",gram:"fonc"};
+function str(v,max){return typeof v==="string"&&v.trim()&&v.length<=max?v.trim():null;}
+function cleanQ(it,level,idx){
+  if(!it||typeof it!=="object")return null;
+  var t=THEMES[it.theme]?it.theme:"passe";
+  var r=RULES[it.rule]?it.rule:DEF_RULE[t];
+  var id="c"+Date.now().toString(36)+idx,q;
+  if(it.k==="qcm"){
+    var o=Array.isArray(it.o)?it.o.map(function(x){return str(x,90);}).filter(Boolean):[];
+    var uniq=o.filter(function(x,i){return o.indexOf(x)===i;});
+    var qq=str(it.q,320),w=str(it.w,500);
+    if(!qq||!w||uniq.length<2||uniq.length>4)return null;
+    q={k:"qcm",q:qq,o:uniq,a:0,w:w};
+  } else if(it.k==="fill"){
+    var a=Array.isArray(it.a)?it.a.map(function(x){return str(x,80);}).filter(Boolean):[];
+    var q2=str(it.q,320),w2=str(it.w,500);
+    if(!q2||!w2||!a.length||a.length>4)return null;
+    q={k:"fill",q:q2,a:a,w:w2};
+  } else if(it.k==="pass"){
+    var x=str(it.x,1500),b=Array.isArray(it.b)?it.b:null;
+    if(!x||!b||b.length<3||b.length>9)return null;
+    var bl=[];
+    for(var i=0;i<b.length;i++){
+      if(x.indexOf("{"+(i+1)+"}")<0)return null;
+      var ww=str(b[i]&&b[i].w,400);if(!ww)return null;
+      if(Array.isArray(b[i].o)){
+        var oo=b[i].o.map(function(z){return str(z,60);}).filter(Boolean);
+        if(oo.length<2||oo.length>4||oo.filter(function(z,k){return oo.indexOf(z)===k;}).length!==oo.length)return null;
+        bl.push({o:oo,a:0,w:ww});
+      } else if(Array.isArray(b[i].a)){
+        var aa=b[i].a.map(function(z){return str(z,60);}).filter(Boolean);
+        if(!aa.length)return null;
+        bl.push({a:aa,w:ww});
+      } else return null;
+    }
+    if((x.match(/\{\d+\}/g)||[]).length!==b.length)return null;
+    q={k:"pass",title:str(it.title,60)||"Récit",x:x,b:bl};
+  } else return null;
+  q.id=id;q.l=level;q.t=t;q.r=r;q.claude=true;
+  return q;
+}
+function parseJSON(txt){
+  var s=txt.indexOf("["),e=txt.lastIndexOf("]");
+  if(s<0||e<s)throw new Error("Réponse inattendue de Claude. Réessaie.");
+  try{return JSON.parse(txt.slice(s,e+1));}catch(err){throw new Error("Réponse de Claude illisible. Réessaie.");}
+}
+function genRun(){
+  var level=+(PF.level||"2"),theme=PF.theme||"all",n=+(PF.n||"12");
+  var weak=(PF.weak!==false)?weakRules():[];
+  PF.busy=true;PF.gmsg="Claude prépare les exercices (jusqu’à une minute)…";PF.newCount=0;render();
+  api(buildPrompt(level,theme,n,weak),Math.min(8000,n*450+1200)).then(function(txt){
+    var arr=parseJSON(txt),out=[],keys={};
+    mem.extra.forEach(function(q){keys[qkey(q)]=1;});
+    arr.forEach(function(it,i){var q=cleanQ(it,level,i);if(q&&!keys[qkey(q)]){keys[qkey(q)]=1;out.push(q);}});
+    if(!out.length)throw new Error("Aucune question valable reçue. Réessaie.");
+    mem.extra=mem.extra.concat(out).slice(-300);save();
+    PF.newCount=out.length;PF.newLevel=level;
+    PF.gmsg=out.length+" nouvelles questions ajoutées"+(out.length<arr.length?" ("+(arr.length-out.length)+" refusées car mal formées)":"")+".";
+  }).catch(function(e){PF.gmsg="Échec : "+e.message;}).then(function(){PF.busy=false;if(S.view==="parent")render();});
+}
+function keyTest(){
+  var k=($("#ck")||{}).value;if(k!==undefined){mem.set.key=k.trim();mem.set.model=(($("#cm")||{}).value||DEFAULT_MODEL).trim();save();}
+  if(!mem.set.key){PF.msg="Entre d’abord une clé.";render();return;}
+  PF.busy=true;PF.msg="Test en cours…";render();
+  api("Réponds seulement par le mot OK.",20).then(function(t){PF.msg="Connexion réussie : Claude répond.";}).catch(function(e){PF.msg="Échec : "+e.message;}).then(function(){PF.busy=false;if(S.view==="parent")render();});
+}
+
+/* ---------- Actions ---------- */
+function check(){
+  var q=cur(),a=S.ans[q.id];
+  if(!hasAns(q,a)){S.msg=q.k==="pass"?"Complète tous les trous, puis valide.":"Réponds d’abord, puis valide.";render();return;}
+  S.msg="";
+  var g=grade(q,a);
+  S.checked=true;S.g=g;
+  S.log.push({q:q,a:a,g:g});
+  markSeen(q);
+  if(g.pts<g.max)addErr(q);else delErr(q);
+  save();
+  render();
+  var fb=$("#fb");if(fb){fb.scrollIntoView({block:"nearest"});}
+}
+function nextQ(){
+  if(S.mode==="train"){
+    if(S.i+1>=S.qs.length){finishTrain();return;}
+    S.i++;S.checked=false;S.g=null;S.msg="";render(true);
+  } else if(S.i+1<S.qs.length){S.i++;S.msg="";render(true);}
+}
+function themeStats(log){
+  var th={};
+  log.forEach(function(x){var t=x.q.t;th[t]=th[t]||{p:0,m:0};th[t].p+=x.g.pts;th[t].m+=x.g.max;});
+  return th;
+}
+function starsFor(pct){return pct>=90?3:pct>=75?2:pct>=60?1:0;}
+function finishTrain(){
+  var pts=0,max=0;S.log.forEach(function(x){pts+=x.g.pts;max+=x.g.max;});
+  var pct=max?pts/max*100:0;
+  S.res={mode:"train",pts:pts,max:max,stars:starsFor(pct),th:themeStats(S.log),log:S.log,showAll:false};
+  S.view="results";render(true);
+}
+function finishExam(timeout){
+  stopTimer();
+  var log=S.qs.map(function(q){var a=S.ans[q.id];return {q:q,a:a,g:grade(q,a)};});
+  var pts=0,max=0;log.forEach(function(x){pts+=x.g.pts;max+=x.g.max;});
+  var pct=max?pts/max*100:0,st=starsFor(pct);
+  var used=Math.min(EXAM_MS,Date.now()-S.start);
+  log.forEach(function(x){if(hasAnyAns(x.q,x.a))markSeen(x.q);if(x.g.pts<x.g.max)addErr(x.q);});
+  var key=S.src+":"+S.level;
+  if(!mem.best[key]||pts/max>mem.best[key].pts/mem.best[key].max){mem.best[key]={pts:pts,max:max,stars:st,date:new Date().toISOString()};}
+  mem.hist.unshift({level:String(S.level),src:S.src,pts:pts,max:max,date:new Date().toISOString()});
+  mem.hist=mem.hist.slice(0,30);
+  save();
+  S.res={mode:"exam",pts:pts,max:max,stars:st,th:themeStats(log),log:log,used:used,timeout:!!timeout,showAll:false};
+  S.view="results";render(true);
+}
+function goHome(){stopTimer();S={view:"home"};PF.ok=false;render(true);}
+function openParent(){stopTimer();S={view:"parent"};PF.a=6+Math.floor(Math.random()*4);PF.b=6+Math.floor(Math.random()*4);PF.err="";PF.gate="";render(true);}
+function exportData(){
+  var o={v:2,best:mem.best,errors:mem.errors,hist:mem.hist,seen:mem.seen,extra:mem.extra};
+  PF.imp=JSON.stringify(o);PF.smsg="Texte exporté ci-dessus : copie-le et garde-le (ou colle-le sur un autre appareil).";render();
+  var t=$("#imp");if(t){t.focus();t.select();}
+}
+function importData(){
+  var txt=(($("#imp")||{}).value||PF.imp||"").trim();
+  try{
+    var o=JSON.parse(txt);
+    if(!o||typeof o!=="object"||!o.best)throw new Error("format");
+    mem.best=o.best||{};mem.errors=Array.isArray(o.errors)?o.errors:[];mem.hist=Array.isArray(o.hist)?o.hist:[];mem.seen=Array.isArray(o.seen)?o.seen:[];
+    if(Array.isArray(o.extra)){var ok=[];o.extra.forEach(function(q,i){var c=cleanQ(q,q&&q.l>=1&&q.l<=4?q.l:2,"i"+i);if(c)ok.push(c);});mem.extra=ok;}
+    save();PF.smsg="Progression importée.";
+  }catch(e){PF.smsg="Ce texte n’est pas une sauvegarde valable.";}
+  render();
+}
+
+document.addEventListener("click",function(e){
+  var el=e.target.closest("[data-act]");if(!el)return;
+  var act=el.getAttribute("data-act");
+  switch(act){
+    case "src":mem.set.src=el.getAttribute("data-s");save();render();break;
+    case "theme":THEME=el.getAttribute("data-t");render();break;
+    case "train":startTrain(+el.getAttribute("data-l"));break;
+    case "exam":var l=el.getAttribute("data-l");startExam(l==="mix"?"mix":+l);break;
+    case "errors":startErrors();break;
+    case "rules":S={view:"rules"};render(true);break;
+    case "home":goHome();break;
+    case "parent":openParent();break;
+    case "gate":
+      var v=(($("#gate")||{}).value||"").trim();
+      if(+v===PF.a*PF.b){PF.ok=true;PF.err="";render(true);}else{PF.err="Ce n’est pas la bonne réponse.";render();}
+      break;
+    case "key-save":
+      mem.set.key=((($("#ck")||{}).value)||"").trim();mem.set.model=((($("#cm")||{}).value)||DEFAULT_MODEL).trim()||DEFAULT_MODEL;save();
+      PF.ck=undefined;PF.cm=undefined;PF.msg=mem.set.key?"Clé enregistrée sur cette tablette.":"Clé effacée.";render();break;
+    case "key-test":keyTest();break;
+    case "key-clear":mem.set.key="";PF.ck="";PF.msg="Clé effacée.";save();render();break;
+    case "gen-run":genRun();break;
+    case "play-claude":mem.set.src="claude";save();THEME="all";startTrain(PF.newLevel||2);break;
+    case "extra-clear":mem.extra=[];save();PF.newCount=0;PF.gmsg="Questions de Claude effacées.";if(mem.set.src==="claude")mem.set.src="bank";render();break;
+    case "export":exportData();break;
+    case "import":importData();break;
+    case "reset":PF.confirmReset=true;render();break;
+    case "reset-no":PF.confirmReset=false;render();break;
+    case "reset-yes":mem.best={};mem.errors=[];mem.hist=[];mem.seen=[];mem.extra=[];if(mem.set.src==="claude")mem.set.src="bank";save();PF.confirmReset=false;PF.smsg="Progression réinitialisée.";PF.newCount=0;render();break;
+    case "leave":S.leave=true;render();break;
+    case "leave-no":S.leave=false;render();break;
+    case "leave-yes":goHome();break;
+    case "pick":S.ans[cur().id]=+el.getAttribute("data-i");S.msg="";render();break;
+    case "check":check();break;
+    case "next":nextQ();break;
+    case "prev":if(S.i>0){S.i--;render(true);}break;
+    case "goto":S.i=+el.getAttribute("data-n");render(true);break;
+    case "finish":S.confirm=true;render();break;
+    case "finish-no":S.confirm=false;render();break;
+    case "finish-yes":finishExam(false);break;
+    case "showall":S.res.showAll=!S.res.showAll;render();break;
+    case "again":
+      if(S.res.mode==="exam")startExam(S.level);
+      else if(S.level)startTrain(S.level);
+      else startErrors();
+      break;
+  }
+});
+function onInput(e){
+  var t=e.target;
+  if(t.getAttribute&&t.getAttribute("data-pf")){PF[t.getAttribute("data-pf")]=t.type==="checkbox"?t.checked:t.value;return;}
+  if(S.view!=="play"||!S.qs)return;
+  var q=cur();
+  if(t.id==="ans"){S.ans[q.id]=t.value;S.msg="";}
+  else if(t.hasAttribute&&t.hasAttribute("data-b")){
+    var i=+t.getAttribute("data-b"),a=S.ans[q.id]||[];
+    if(t.tagName==="SELECT")a[i]=t.value===""?undefined:+t.value;else a[i]=t.value;
+    S.ans[q.id]=a;S.msg="";
+  }
+}
+document.addEventListener("input",onInput);
+document.addEventListener("change",onInput);
+document.addEventListener("keydown",function(e){
+  if(e.key!=="Enter")return;
+  if(S.view==="parent"&&!PF.ok&&e.target.id==="gate"){e.preventDefault();var el=$("[data-act=gate]");if(el)el.click();return;}
+  if(S.view!=="play"||S.mode!=="train")return;
+  if(e.target.closest&&e.target.closest("button"))return;
+  e.preventDefault();
+  if(S.checked)nextQ();else check();
+});
+function render(scroll){
+  var app=$("#app");
+  app.innerHTML=S.view==="home"?viewHome():S.view==="play"?viewPlay():S.view==="results"?viewResults():S.view==="parent"?viewParent():viewRules();
+  if(scroll)window.scrollTo(0,0);
+}
+window.addEventListener("online",function(){if(S.view==="parent"&&PF.ok)render();});
+window.addEventListener("offline",function(){if(S.view==="parent"&&PF.ok)render();});
+if("serviceWorker" in navigator&&/^https?:/.test(location.protocol)){try{navigator.serviceWorker.register("sw.js");}catch(e){}}
+render();
+})();
+
+</script>
+</body>
+</html>
